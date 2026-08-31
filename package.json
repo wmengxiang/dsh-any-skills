@@ -1,6 +1,6 @@
 {
   "name": "dsh-any-skills",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Import, install and invoke Agent Skills in DeepSeek Harness from Codex, Claude Code, OpenCode, GitHub or npm — with a composer-side skill picker. · 从 Codex / Claude Code / OpenCode / GitHub / npm 导入并安装技能到 ~/.dsh/skills，支持 composer 旁一键插入 /skill-name 调用。",
   "type": "module",
   "main": "index.js",
