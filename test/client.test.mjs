@@ -168,6 +168,88 @@ test('client bundle: buildInsertedDraft replaces the selected range', () => {
   assert.deepEqual({ ...buildInsertedDraft('hello world', 'git', { start: 6, end: 11 }) }, { text: 'hello /git ', caret: 11 })
 })
 
+test('client bundle: installed-open preference helpers persist collapse state', () => {
+  const calls = []
+  const ls = {
+    getItem: (k) => (k === 'dsh-any-skills:installed-open' ? '0' : null),
+    setItem: (k, v) => calls.push([k, v]),
+  }
+  const { loadInstalledOpen, saveInstalledOpen } = loadClientBundle({ localStorage: ls })
+  assert.equal(loadInstalledOpen(), false, "'0' means collapsed")
+  saveInstalledOpen(true)
+  assert.deepEqual(calls[0], ['dsh-any-skills:installed-open', '1'])
+  saveInstalledOpen(false)
+  assert.deepEqual(calls[1], ['dsh-any-skills:installed-open', '0'])
+
+  const { loadInstalledOpen: loadDefault } = loadClientBundle({ localStorage: { getItem: () => null } })
+  assert.equal(loadDefault(), true, 'no stored value means expanded by default')
+})
+
+/** 深度优先查找 vdom 树中满足条件的节点（createElementStub 产物）。 */
+function findBy(node, predicate) {
+  if (node === null || node === undefined) return null
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findBy(child, predicate)
+      if (found !== null) return found
+    }
+    return null
+  }
+  if (typeof node !== 'object') return null
+  if (predicate(node)) return node
+  return findBy(node.children, predicate)
+}
+
+test('client bundle: settings section renders the installed-list collapse header', () => {
+  const { apply } = loadClientBundle({ localStorage: { getItem: () => '1', setItem: () => undefined } })
+  const registrations = []
+  const ctx = {
+    slots: {
+      inject(key, callback) {
+        registrations.push({ key, callback })
+        return () => undefined
+      },
+      register(opts, component) {
+        return { opts, component }
+      },
+    },
+    effect(callback) {
+      return callback() ?? (() => undefined)
+    },
+  }
+  apply(ctx)
+  const settings = registrations.find((r) => r.key === 'settings.section').callback()
+  const tree = settings.component({})
+  const header = findBy(tree, (n) => n && typeof n === 'object' && n.props !== null && n.props['aria-expanded'] !== undefined)
+  assert.ok(header !== null, 'collapse header with aria-expanded is rendered')
+  assert.equal(header.props.role, 'button')
+  assert.equal(header.props['aria-expanded'], true, 'expanded by stored preference')
+})
+
+test('client bundle: CSS uses official theme tokens only (light/dark adaptive)', () => {
+  const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
+  for (const banned of [
+    '--dsw-alias-interactive-bg-hover',
+    '--dsw-alias-label-tertiary',
+    '--dsw-alias-label-primary-bluish',
+    '--dsw-alias-danger',
+    '--dsw-specific-tip',
+    '#1e2533',
+  ]) {
+    assert.ok(!source.includes(banned), `CSS must not use ${banned}`)
+  }
+  for (const official of [
+    '--dsw-alias-bg-overlay',
+    '--dsw-alias-state-error-primary',
+    '--dsw-alias-state-success-primary',
+    '--dsw-alias-state-warn-primary',
+    '--dsw-alias-brand-primary',
+    '--dsw-alias-label-secondary',
+  ]) {
+    assert.ok(source.includes(official), `CSS must use ${official}`)
+  }
+})
+
 test('client bundle: apply tolerates missing slots', () => {
   const { apply } = loadClientBundle()
   assert.doesNotThrow(() => apply({ slots: undefined, get: () => undefined }))

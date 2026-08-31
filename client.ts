@@ -76,57 +76,59 @@ const apiRestore = (name: string, trash: string) => api<{ message: string }>(`${
 /* ---------------- styles ---------------- */
 
 const STYLE_ID = 'dsh-any-skills-style'
+// 全部使用 DSH 官方主题令牌（--dsw-alias-*，明暗主题自动翻转）；
+// 交互底色由 label-primary 派生（color-mix），不再依赖非官方令牌或写死的暗色兜底色。
 const CSS = [
-  '.dsh-as-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;margin:0 2px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.28));border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.06));color:var(--dsw-alias-label-secondary,#c9d2e0);cursor:pointer;padding:0;transition:background-color .18s ease,color .18s ease,border-color .18s ease}',
-  '.dsh-as-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.4))}',
+  '.dsh-as-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;margin:0 2px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.28));border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);cursor:pointer;padding:0;transition:background-color .18s ease,color .18s ease,border-color .18s ease}',
+  '.dsh-as-btn:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 14%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.4))}',
   '.dsh-as-btn:disabled{opacity:.45;cursor:not-allowed}',
-  '.dsh-as-btn.dsh-as-open{color:var(--dsw-alias-label-primary-bluish,#4cc9f0);border-color:var(--dsw-alias-label-primary-bluish,#4cc9f0);background:rgba(79,140,255,.12)}',
-  '.dsh-as-pop{position:absolute;bottom:calc(100% + 8px);right:0;width:340px;max-height:340px;display:flex;flex-direction:column;background:var(--dsw-specific-tip,#1e2533);border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.35));border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);overflow:hidden;z-index:1000}',
-  '.dsh-as-search{box-sizing:border-box;width:calc(100% - 16px);margin:8px;padding:6px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.3));border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.1));color:var(--dsw-alias-label-primary,#e6ebf2);font-size:13px;outline:none;flex:none}',
+  '.dsh-as-btn.dsh-as-open{color:var(--dsw-alias-brand-primary,#4f8cff);border-color:var(--dsw-alias-brand-primary,#4f8cff);background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 12%,transparent)}',
+  '.dsh-as-pop{position:absolute;bottom:calc(100% + 8px);right:0;width:340px;max-height:340px;display:flex;flex-direction:column;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.35));border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);overflow:hidden;z-index:1000}',
+  '.dsh-as-search{box-sizing:border-box;width:calc(100% - 16px);margin:8px;padding:6px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.3));border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 10%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);font-size:13px;outline:none;flex:none}',
   '.dsh-as-list{overflow-y:auto;flex:auto;padding:0 6px 8px}',
   '.dsh-as-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:7px 10px;border:none;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary,#e6ebf2);cursor:pointer;text-align:left}',
-  '.dsh-as-item:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12))}',
+  '.dsh-as-item:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent)}',
   '.dsh-as-name{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:13px;font-weight:500}',
-  '.dsh-as-desc{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}',
-  '.dsh-as-status{padding:12px;color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:13px}',
+  '.dsh-as-desc{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}',
+  '.dsh-as-status{padding:12px;color:var(--dsw-alias-label-secondary,#8a94a6);font-size:13px}',
   '.dsh-as-page{display:grid;gap:18px;width:100%;min-width:0;max-width:780px;padding:6px 0 36px;font-size:14px;line-height:1.55;color:var(--dsw-alias-label-primary,#e6ebf2)}',
-  '.dsh-as-card{display:grid;gap:10px;padding:16px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.22));border-radius:12px;background:var(--dsw-alias-bg-module-platform,transparent)}',
+  '.dsh-as-card{display:grid;gap:10px;padding:16px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.22));border-radius:12px;background:var(--dsw-alias-bg-layer-1,transparent)}',
   '.dsh-as-card h3{margin:0;font-size:15px;font-weight:600}',
-  '.dsh-as-sub{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12.5px;margin:-4px 0 2px}',
+  '.dsh-as-sub{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12.5px;margin:-4px 0 2px}',
   '.dsh-as-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;min-width:0}',
   '.dsh-as-row-main{flex:1;min-width:0}',
-  '.dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));color:var(--dsw-alias-label-secondary,#c9d2e0);font-size:11.5px;font-weight:600;vertical-align:2px}',
-  '.dsh-as-caret{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;flex:none}',
+  '.dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);font-size:11.5px;font-weight:600;vertical-align:2px}',
+  '.dsh-as-caret{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;flex:none}',
   '.dsh-as-card-row{display:grid;gap:0;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;overflow:hidden}',
   '.dsh-as-card-row .dsh-as-row{border:none;border-radius:0}',
-  '.dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.06))}',
+  '.dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent)}',
   '.dsh-as-skill-list{display:grid;gap:6px;padding:8px 10px 10px;border-top:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.12))}',
   '.dsh-as-skill-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.12));border-radius:8px;min-width:0}',
-  '.dsh-as-installed{color:var(--dsw-alias-success,#7bdca8);font-size:12px;font-weight:500}',
-  '.dsh-as-code{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));padding:1px 5px;border-radius:4px;word-break:break-all}',
+  '.dsh-as-installed{color:var(--dsw-alias-state-success-primary,#7bdca8);font-size:12px;font-weight:500}',
+  '.dsh-as-code{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);padding:1px 5px;border-radius:4px;word-break:break-all}',
   '.dsh-as-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary,#e6ebf2);user-select:none}',
-  '.dsh-as-switch{position:relative;width:36px;height:20px;flex:none;appearance:none;-webkit-appearance:none;margin:0;background:rgba(128,128,128,.32);border-radius:999px;cursor:pointer;transition:background .15s ease;outline:none}',
-  '.dsh-as-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s ease}',
+  '.dsh-as-switch{position:relative;width:36px;height:20px;flex:none;appearance:none;-webkit-appearance:none;margin:0;background:color-mix(in srgb,var(--dsw-alias-label-secondary,#8a94a6) 32%,transparent);border-radius:999px;cursor:pointer;transition:background .15s ease;outline:none}',
+  '.dsh-as-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-bg-base,#fff);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s ease}',
   '.dsh-as-switch:checked{background:var(--dsw-alias-brand-primary,#4f8cff)}',
   '.dsh-as-switch:checked::after{transform:translateX(16px)}',
   '.dsh-as-switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f8cff);outline-offset:2px}',
   '.dsh-as-row-name{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
-  '.dsh-as-row-desc{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+  '.dsh-as-row-desc{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
   '.dsh-as-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}',
-  '.dsh-as-input{flex:1;min-width:180px;background:var(--dsw-alias-bg-module-platform,#1a1d24);border:1px solid var(--dsw-alias-border-l2,#2a2e38);color:inherit;border-radius:8px;padding:7px 11px;font-size:13px;outline:none}',
+  '.dsh-as-input{flex:1;min-width:180px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);color:inherit;border-radius:8px;padding:7px 11px;font-size:13px;outline:none}',
   '.dsh-as-input:focus{border-color:var(--dsw-alias-brand-primary,#4f8cff)}',
-  '.dsh-as-btn2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.24));background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.05));color:var(--dsw-alias-label-primary,#e6ebf2);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}',
-  '.dsh-as-btn2:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.45))}',
-  '.dsh-as-btn2:active:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.18))}',
+  '.dsh-as-btn2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.24));background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 5%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}',
+  '.dsh-as-btn2:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.45))}',
+  '.dsh-as-btn2:active:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 18%,transparent)}',
   '.dsh-as-btn2:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f8cff);outline-offset:2px}',
   '.dsh-as-btn2:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}',
-  '.dsh-as-btn2.dsh-as-primary{background:var(--dsw-alias-brand-primary,#4f8cff);border-color:transparent;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}',
-  '.dsh-as-btn2.dsh-as-primary:hover:not(:disabled){background:#3f7be8;color:#fff;border-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.28)}',
-  '.dsh-as-btn2.dsh-as-primary:active:not(:disabled){background:#3568c9}',
-  '.dsh-as-btn2.dsh-as-danger{color:var(--dsw-alias-danger,#e05c5c);border-color:rgba(224,92,92,.35);background:rgba(224,92,92,.05)}',
-  '.dsh-as-btn2.dsh-as-danger:hover:not(:disabled){color:var(--dsw-alias-danger,#e05c5c);background:rgba(224,92,92,.12);border-color:var(--dsw-alias-danger,#e05c5c)}',
-  '.dsh-as-err{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:#e0a13c;background:rgba(224,161,60,.08);border:1px solid rgba(224,161,60,.3)}',
-  '.dsh-as-ok{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:#7bdca8;background:rgba(123,220,168,.08);border:1px solid rgba(123,220,168,.28)}',
+  '.dsh-as-btn2.dsh-as-primary{background:var(--dsw-alias-brand-primary,#4f8cff);border-color:transparent;color:var(--dsw-alias-bg-base,#fff);box-shadow:0 1px 2px rgba(0,0,0,.2)}',
+  '.dsh-as-btn2.dsh-as-primary:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 88%,#000);color:var(--dsw-alias-bg-base,#fff);border-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.28)}',
+  '.dsh-as-btn2.dsh-as-primary:active:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 78%,#000)}',
+  '.dsh-as-btn2.dsh-as-danger{color:var(--dsw-alias-state-error-primary,#e05c5c);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 35%,transparent);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 5%,transparent)}',
+  '.dsh-as-btn2.dsh-as-danger:hover:not(:disabled){color:var(--dsw-alias-state-error-primary,#e05c5c);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 12%,transparent);border-color:var(--dsw-alias-state-error-primary,#e05c5c)}',
+  '.dsh-as-err{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-warn-primary,#e0a13c);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 30%,transparent)}',
+  '.dsh-as-ok{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-success-primary,#7bdca8);background:color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 28%,transparent)}',
   '.dsh-as-spin{animation:dsh-as-spin .9s linear infinite}',
   '@keyframes dsh-as-spin{to{transform:rotate(360deg)}}',
 ].join('\n')
@@ -200,6 +202,27 @@ function loadUsage(): Record<string, UsageEntry> {
 function saveUsage(usage: Record<string, UsageEntry>): void {
   try {
     localStorage.setItem(USAGE_KEY, JSON.stringify(usage))
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/* ---------------- installed-list collapse preference ---------------- */
+/* 设置页「已安装技能」列表可折叠，状态持久化到 localStorage（默认展开）。 */
+
+const INSTALLED_OPEN_KEY = 'dsh-any-skills:installed-open'
+
+export function loadInstalledOpen(): boolean {
+  try {
+    return localStorage.getItem(INSTALLED_OPEN_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+export function saveInstalledOpen(open: boolean): void {
+  try {
+    localStorage.setItem(INSTALLED_OPEN_KEY, open ? '1' : '0')
   } catch {
     /* storage unavailable */
   }
@@ -525,6 +548,15 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
   const [lastUninstall, setLastUninstall] = useState<UninstallInfo | null>(null)
   const [pickerEnabled, setPickerEnabledState] = useState<boolean>(() => isPickerEnabled())
+  const [installedOpen, setInstalledOpen] = useState<boolean>(() => loadInstalledOpen())
+
+  const toggleInstalled = () => {
+    setInstalledOpen((open) => {
+      const next = !open
+      saveInstalledOpen(next)
+      return next
+    })
+  }
 
   const togglePicker = (value: boolean) => {
     setPickerEnabledState(value)
@@ -688,28 +720,49 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     ),
 
     h('section', { className: 'dsh-as-card' },
-      h('h3', null, '已安装技能'),
-      h('p', { className: 'dsh-as-sub' }, `安装目录：${installDir ?? '…'}`),
-      installed === null
-        ? h('p', { className: 'dsh-as-status' }, '正在读取…')
-        : installed.length === 0
-          ? h('p', { className: 'dsh-as-status' }, '还没有安装任何技能。')
-          : h('div', { style: { display: 'grid', gap: 8 } },
-            installed.map((skill) => h('div', { key: skill.name, className: 'dsh-as-row' },
-              h('div', { className: 'dsh-as-row-main' },
-                h('div', { className: 'dsh-as-row-name' }, `/${skill.name}`),
-                h('div', { className: 'dsh-as-row-desc' }, skill.description || '(无描述)'),
-              ),
-              h('button', {
-                type: 'button',
-                className: 'dsh-as-btn2 dsh-as-danger',
-                disabled: busy,
-                onClick: () => void uninstall(skill.name),
-                title: `卸载 ${skill.name}`,
-                'aria-label': `卸载 ${skill.name}`,
-              }, h(IconTrash), '卸载'),
-            )),
+      h('div', { className: 'dsh-as-card-row' + (installedOpen ? ' dsh-as-row-open' : '') },
+        h('div', {
+          className: 'dsh-as-row',
+          style: { cursor: 'pointer' },
+          onClick: toggleInstalled,
+          role: 'button',
+          'aria-expanded': installedOpen,
+          title: installedOpen ? '点击折叠已安装技能列表' : '点击展开已安装技能列表',
+        },
+          h('div', { className: 'dsh-as-row-main' },
+            h('div', { className: 'dsh-as-row-name' },
+              '已安装技能',
+              installed !== null ? h('span', { className: 'dsh-as-count' }, `${installed.length} 个`) : null,
+            ),
           ),
+          h('span', { className: 'dsh-as-caret', 'aria-hidden': true }, installedOpen ? '▾' : '▸'),
+        ),
+        installedOpen
+          ? h('div', { className: 'dsh-as-skill-list' },
+            h('p', { className: 'dsh-as-sub', style: { marginTop: 0 } }, `安装目录：${installDir ?? '…'}`),
+            installed === null
+              ? h('p', { className: 'dsh-as-status' }, '正在读取…')
+              : installed.length === 0
+                ? h('p', { className: 'dsh-as-status' }, '还没有安装任何技能。')
+                : h('div', { style: { display: 'grid', gap: 8 } },
+                  installed.map((skill) => h('div', { key: skill.name, className: 'dsh-as-row' },
+                    h('div', { className: 'dsh-as-row-main' },
+                      h('div', { className: 'dsh-as-row-name' }, `/${skill.name}`),
+                      h('div', { className: 'dsh-as-row-desc' }, skill.description || '(无描述)'),
+                    ),
+                    h('button', {
+                      type: 'button',
+                      className: 'dsh-as-btn2 dsh-as-danger',
+                      disabled: busy,
+                      onClick: () => void uninstall(skill.name),
+                      title: `卸载 ${skill.name}`,
+                      'aria-label': `卸载 ${skill.name}`,
+                    }, h(IconTrash), '卸载'),
+                  )),
+                ),
+          )
+          : null,
+      ),
     ),
 
     h('section', { className: 'dsh-as-card' },

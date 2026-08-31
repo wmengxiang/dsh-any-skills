@@ -23,7 +23,9 @@ var client_exports = {};
 __export(client_exports, {
   apply: () => apply,
   buildInsertedDraft: () => buildInsertedDraft,
-  inject: () => inject
+  inject: () => inject,
+  loadInstalledOpen: () => loadInstalledOpen,
+  saveInstalledOpen: () => saveInstalledOpen
 });
 module.exports = __toCommonJS(client_exports);
 var import_react = require("react");
@@ -52,56 +54,56 @@ var apiUninstall = (name) => api(`${API}/uninstall`, { method: "DELETE", body: J
 var apiRestore = (name, trash) => api(`${API}/restore`, { method: "POST", body: JSON.stringify({ name, trash }) });
 var STYLE_ID = "dsh-any-skills-style";
 var CSS = [
-  ".dsh-as-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;margin:0 2px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.28));border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.06));color:var(--dsw-alias-label-secondary,#c9d2e0);cursor:pointer;padding:0;transition:background-color .18s ease,color .18s ease,border-color .18s ease}",
-  ".dsh-as-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.14));color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.4))}",
+  ".dsh-as-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:none;margin:0 2px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.28));border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);cursor:pointer;padding:0;transition:background-color .18s ease,color .18s ease,border-color .18s ease}",
+  ".dsh-as-btn:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 14%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.4))}",
   ".dsh-as-btn:disabled{opacity:.45;cursor:not-allowed}",
-  ".dsh-as-btn.dsh-as-open{color:var(--dsw-alias-label-primary-bluish,#4cc9f0);border-color:var(--dsw-alias-label-primary-bluish,#4cc9f0);background:rgba(79,140,255,.12)}",
-  ".dsh-as-pop{position:absolute;bottom:calc(100% + 8px);right:0;width:340px;max-height:340px;display:flex;flex-direction:column;background:var(--dsw-specific-tip,#1e2533);border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.35));border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);overflow:hidden;z-index:1000}",
-  ".dsh-as-search{box-sizing:border-box;width:calc(100% - 16px);margin:8px;padding:6px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.3));border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.1));color:var(--dsw-alias-label-primary,#e6ebf2);font-size:13px;outline:none;flex:none}",
+  ".dsh-as-btn.dsh-as-open{color:var(--dsw-alias-brand-primary,#4f8cff);border-color:var(--dsw-alias-brand-primary,#4f8cff);background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 12%,transparent)}",
+  ".dsh-as-pop{position:absolute;bottom:calc(100% + 8px);right:0;width:340px;max-height:340px;display:flex;flex-direction:column;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.35));border-radius:12px;box-shadow:0 8px 28px rgba(0,0,0,.35);overflow:hidden;z-index:1000}",
+  ".dsh-as-search{box-sizing:border-box;width:calc(100% - 16px);margin:8px;padding:6px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(128,128,128,.3));border-radius:8px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 10%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);font-size:13px;outline:none;flex:none}",
   ".dsh-as-list{overflow-y:auto;flex:auto;padding:0 6px 8px}",
   ".dsh-as-item{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:7px 10px;border:none;border-radius:8px;background:transparent;color:var(--dsw-alias-label-primary,#e6ebf2);cursor:pointer;text-align:left}",
-  ".dsh-as-item:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12))}",
+  ".dsh-as-item:hover{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent)}",
   ".dsh-as-name{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:13px;font-weight:500}",
-  ".dsh-as-desc{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
-  ".dsh-as-status{padding:12px;color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:13px}",
+  ".dsh-as-desc{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}",
+  ".dsh-as-status{padding:12px;color:var(--dsw-alias-label-secondary,#8a94a6);font-size:13px}",
   ".dsh-as-page{display:grid;gap:18px;width:100%;min-width:0;max-width:780px;padding:6px 0 36px;font-size:14px;line-height:1.55;color:var(--dsw-alias-label-primary,#e6ebf2)}",
-  ".dsh-as-card{display:grid;gap:10px;padding:16px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.22));border-radius:12px;background:var(--dsw-alias-bg-module-platform,transparent)}",
+  ".dsh-as-card{display:grid;gap:10px;padding:16px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.22));border-radius:12px;background:var(--dsw-alias-bg-layer-1,transparent)}",
   ".dsh-as-card h3{margin:0;font-size:15px;font-weight:600}",
-  ".dsh-as-sub{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12.5px;margin:-4px 0 2px}",
+  ".dsh-as-sub{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12.5px;margin:-4px 0 2px}",
   ".dsh-as-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;min-width:0}",
   ".dsh-as-row-main{flex:1;min-width:0}",
-  ".dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));color:var(--dsw-alias-label-secondary,#c9d2e0);font-size:11.5px;font-weight:600;vertical-align:2px}",
-  ".dsh-as-caret{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;flex:none}",
+  ".dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);font-size:11.5px;font-weight:600;vertical-align:2px}",
+  ".dsh-as-caret{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;flex:none}",
   ".dsh-as-card-row{display:grid;gap:0;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;overflow:hidden}",
   ".dsh-as-card-row .dsh-as-row{border:none;border-radius:0}",
-  ".dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.06))}",
+  ".dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent)}",
   ".dsh-as-skill-list{display:grid;gap:6px;padding:8px 10px 10px;border-top:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.12))}",
   ".dsh-as-skill-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.12));border-radius:8px;min-width:0}",
-  ".dsh-as-installed{color:var(--dsw-alias-success,#7bdca8);font-size:12px;font-weight:500}",
-  ".dsh-as-code{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));padding:1px 5px;border-radius:4px;word-break:break-all}",
+  ".dsh-as-installed{color:var(--dsw-alias-state-success-primary,#7bdca8);font-size:12px;font-weight:500}",
+  ".dsh-as-code{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);padding:1px 5px;border-radius:4px;word-break:break-all}",
   ".dsh-as-toggle{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:500;color:var(--dsw-alias-label-primary,#e6ebf2);user-select:none}",
-  ".dsh-as-switch{position:relative;width:36px;height:20px;flex:none;appearance:none;-webkit-appearance:none;margin:0;background:rgba(128,128,128,.32);border-radius:999px;cursor:pointer;transition:background .15s ease;outline:none}",
-  '.dsh-as-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s ease}',
+  ".dsh-as-switch{position:relative;width:36px;height:20px;flex:none;appearance:none;-webkit-appearance:none;margin:0;background:color-mix(in srgb,var(--dsw-alias-label-secondary,#8a94a6) 32%,transparent);border-radius:999px;cursor:pointer;transition:background .15s ease;outline:none}",
+  '.dsh-as-switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-bg-base,#fff);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s ease}',
   ".dsh-as-switch:checked{background:var(--dsw-alias-brand-primary,#4f8cff)}",
   ".dsh-as-switch:checked::after{transform:translateX(16px)}",
   ".dsh-as-switch:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f8cff);outline-offset:2px}",
   ".dsh-as-row-name{font-family:var(--ds-font-family-code,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-  ".dsh-as-row-desc{color:var(--dsw-alias-label-tertiary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+  ".dsh-as-row-desc{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
   ".dsh-as-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap}",
-  ".dsh-as-input{flex:1;min-width:180px;background:var(--dsw-alias-bg-module-platform,#1a1d24);border:1px solid var(--dsw-alias-border-l2,#2a2e38);color:inherit;border-radius:8px;padding:7px 11px;font-size:13px;outline:none}",
+  ".dsh-as-input{flex:1;min-width:180px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l2);color:inherit;border-radius:8px;padding:7px 11px;font-size:13px;outline:none}",
   ".dsh-as-input:focus{border-color:var(--dsw-alias-brand-primary,#4f8cff)}",
-  ".dsh-as-btn2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.24));background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.05));color:var(--dsw-alias-label-primary,#e6ebf2);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}",
-  ".dsh-as-btn2:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.12));color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.45))}",
-  ".dsh-as-btn2:active:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(128,128,128,.18))}",
+  ".dsh-as-btn2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.24));background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 5%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);font-size:12.5px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease}",
+  ".dsh-as-btn2:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-primary,#e6ebf2);border-color:var(--dsw-alias-border-l1,rgba(128,128,128,.45))}",
+  ".dsh-as-btn2:active:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 18%,transparent)}",
   ".dsh-as-btn2:focus-visible{outline:2px solid var(--dsw-alias-brand-primary,#4f8cff);outline-offset:2px}",
   ".dsh-as-btn2:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}",
-  ".dsh-as-btn2.dsh-as-primary{background:var(--dsw-alias-brand-primary,#4f8cff);border-color:transparent;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}",
-  ".dsh-as-btn2.dsh-as-primary:hover:not(:disabled){background:#3f7be8;color:#fff;border-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.28)}",
-  ".dsh-as-btn2.dsh-as-primary:active:not(:disabled){background:#3568c9}",
-  ".dsh-as-btn2.dsh-as-danger{color:var(--dsw-alias-danger,#e05c5c);border-color:rgba(224,92,92,.35);background:rgba(224,92,92,.05)}",
-  ".dsh-as-btn2.dsh-as-danger:hover:not(:disabled){color:var(--dsw-alias-danger,#e05c5c);background:rgba(224,92,92,.12);border-color:var(--dsw-alias-danger,#e05c5c)}",
-  ".dsh-as-err{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:#e0a13c;background:rgba(224,161,60,.08);border:1px solid rgba(224,161,60,.3)}",
-  ".dsh-as-ok{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:#7bdca8;background:rgba(123,220,168,.08);border:1px solid rgba(123,220,168,.28)}",
+  ".dsh-as-btn2.dsh-as-primary{background:var(--dsw-alias-brand-primary,#4f8cff);border-color:transparent;color:var(--dsw-alias-bg-base,#fff);box-shadow:0 1px 2px rgba(0,0,0,.2)}",
+  ".dsh-as-btn2.dsh-as-primary:hover:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 88%,#000);color:var(--dsw-alias-bg-base,#fff);border-color:transparent;box-shadow:0 1px 3px rgba(0,0,0,.28)}",
+  ".dsh-as-btn2.dsh-as-primary:active:not(:disabled){background:color-mix(in srgb,var(--dsw-alias-brand-primary,#4f8cff) 78%,#000)}",
+  ".dsh-as-btn2.dsh-as-danger{color:var(--dsw-alias-state-error-primary,#e05c5c);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 35%,transparent);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 5%,transparent)}",
+  ".dsh-as-btn2.dsh-as-danger:hover:not(:disabled){color:var(--dsw-alias-state-error-primary,#e05c5c);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 12%,transparent);border-color:var(--dsw-alias-state-error-primary,#e05c5c)}",
+  ".dsh-as-err{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-warn-primary,#e0a13c);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 30%,transparent)}",
+  ".dsh-as-ok{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-success-primary,#7bdca8);background:color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 28%,transparent)}",
   ".dsh-as-spin{animation:dsh-as-spin .9s linear infinite}",
   "@keyframes dsh-as-spin{to{transform:rotate(360deg)}}"
 ].join("\n");
@@ -172,6 +174,20 @@ function loadUsage() {
 function saveUsage(usage) {
   try {
     localStorage.setItem(USAGE_KEY, JSON.stringify(usage));
+  } catch {
+  }
+}
+var INSTALLED_OPEN_KEY = "dsh-any-skills:installed-open";
+function loadInstalledOpen() {
+  try {
+    return localStorage.getItem(INSTALLED_OPEN_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+function saveInstalledOpen(open) {
+  try {
+    localStorage.setItem(INSTALLED_OPEN_KEY, open ? "1" : "0");
   } catch {
   }
 }
@@ -416,6 +432,14 @@ function SkillsSettingsSection() {
   const [expanded, setExpanded] = (0, import_react.useState)({});
   const [lastUninstall, setLastUninstall] = (0, import_react.useState)(null);
   const [pickerEnabled, setPickerEnabledState] = (0, import_react.useState)(() => isPickerEnabled());
+  const [installedOpen, setInstalledOpen] = (0, import_react.useState)(() => loadInstalledOpen());
+  const toggleInstalled = () => {
+    setInstalledOpen((open) => {
+      const next = !open;
+      saveInstalledOpen(next);
+      return next;
+    });
+  };
   const togglePicker = (value) => {
     setPickerEnabledState(value);
     applyPickerEnabled(value);
@@ -589,29 +613,58 @@ function SkillsSettingsSection() {
     (0, import_react.createElement)(
       "section",
       { className: "dsh-as-card" },
-      (0, import_react.createElement)("h3", null, "\u5DF2\u5B89\u88C5\u6280\u80FD"),
-      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, `\u5B89\u88C5\u76EE\u5F55\uFF1A${installDir ?? "\u2026"}`),
-      installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u6B63\u5728\u8BFB\u53D6\u2026") : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u4EFB\u4F55\u6280\u80FD\u3002") : (0, import_react.createElement)(
+      (0, import_react.createElement)(
         "div",
-        { style: { display: "grid", gap: 8 } },
-        installed.map((skill) => (0, import_react.createElement)(
+        { className: "dsh-as-card-row" + (installedOpen ? " dsh-as-row-open" : "") },
+        (0, import_react.createElement)(
           "div",
-          { key: skill.name, className: "dsh-as-row" },
+          {
+            className: "dsh-as-row",
+            style: { cursor: "pointer" },
+            onClick: toggleInstalled,
+            role: "button",
+            "aria-expanded": installedOpen,
+            title: installedOpen ? "\u70B9\u51FB\u6298\u53E0\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868" : "\u70B9\u51FB\u5C55\u5F00\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868"
+          },
           (0, import_react.createElement)(
             "div",
             { className: "dsh-as-row-main" },
-            (0, import_react.createElement)("div", { className: "dsh-as-row-name" }, `/${skill.name}`),
-            (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.description || "(\u65E0\u63CF\u8FF0)")
+            (0, import_react.createElement)(
+              "div",
+              { className: "dsh-as-row-name" },
+              "\u5DF2\u5B89\u88C5\u6280\u80FD",
+              installed !== null ? (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${installed.length} \u4E2A`) : null
+            )
           ),
-          (0, import_react.createElement)("button", {
-            type: "button",
-            className: "dsh-as-btn2 dsh-as-danger",
-            disabled: busy,
-            onClick: () => void uninstall(skill.name),
-            title: `\u5378\u8F7D ${skill.name}`,
-            "aria-label": `\u5378\u8F7D ${skill.name}`
-          }, (0, import_react.createElement)(IconTrash), "\u5378\u8F7D")
-        ))
+          (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, installedOpen ? "\u25BE" : "\u25B8")
+        ),
+        installedOpen ? (0, import_react.createElement)(
+          "div",
+          { className: "dsh-as-skill-list" },
+          (0, import_react.createElement)("p", { className: "dsh-as-sub", style: { marginTop: 0 } }, `\u5B89\u88C5\u76EE\u5F55\uFF1A${installDir ?? "\u2026"}`),
+          installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u6B63\u5728\u8BFB\u53D6\u2026") : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u4EFB\u4F55\u6280\u80FD\u3002") : (0, import_react.createElement)(
+            "div",
+            { style: { display: "grid", gap: 8 } },
+            installed.map((skill) => (0, import_react.createElement)(
+              "div",
+              { key: skill.name, className: "dsh-as-row" },
+              (0, import_react.createElement)(
+                "div",
+                { className: "dsh-as-row-main" },
+                (0, import_react.createElement)("div", { className: "dsh-as-row-name" }, `/${skill.name}`),
+                (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.description || "(\u65E0\u63CF\u8FF0)")
+              ),
+              (0, import_react.createElement)("button", {
+                type: "button",
+                className: "dsh-as-btn2 dsh-as-danger",
+                disabled: busy,
+                onClick: () => void uninstall(skill.name),
+                title: `\u5378\u8F7D ${skill.name}`,
+                "aria-label": `\u5378\u8F7D ${skill.name}`
+              }, (0, import_react.createElement)(IconTrash), "\u5378\u8F7D")
+            ))
+          )
+        ) : null
       )
     ),
     (0, import_react.createElement)(
