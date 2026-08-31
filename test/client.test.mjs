@@ -235,6 +235,7 @@ test('client bundle: CSS uses official theme tokens only (light/dark adaptive)',
     '--dsw-alias-danger',
     '--dsw-specific-tip',
     '#1e2533',
+    '#e6ebf2',
   ]) {
     assert.ok(!source.includes(banned), `CSS must not use ${banned}`)
   }
