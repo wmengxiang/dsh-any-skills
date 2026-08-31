@@ -25,6 +25,14 @@ export interface SkillSummary {
   name: string
   /** Description from the SKILL.md frontmatter. */
   description: string
+  /** Optional locale-keyed description (SKILL.md frontmatter `description_zh` / `description_en`). */
+  descriptionZh?: string
+  descriptionEn?: string
+  /** Optional "when to use" guidance (SKILL.md frontmatter `whenToUse`). */
+  whenToUse?: string
+  /** Optional locale-keyed "when to use" (`whenToUse_zh` / `whenToUse_en`). */
+  whenToUseZh?: string
+  whenToUseEn?: string
   /** Absolute path of the installed skill directory (bundle) or .md file (flat). */
   path: string
   /** `bundle` = <name>/SKILL.md directory, `flat` = <name>.md file. */
@@ -80,7 +88,11 @@ export function isValidSkillName(name: string): boolean {
 export interface ParsedSkill {
   name: string
   description: string
+  descriptionZh?: string
+  descriptionEn?: string
   whenToUse?: string
+  whenToUseZh?: string
+  whenToUseEn?: string
   body: string
 }
 
@@ -114,10 +126,18 @@ export function parseSkillText(raw: string): ParsedSkill | undefined {
   if (!isValidSkillName(name)) return undefined
 
   const whenToUse = optionalString(record, 'whenToUse')
+  const descriptionZh = optionalString(record, 'description_zh')
+  const descriptionEn = optionalString(record, 'description_en')
+  const whenToUseZh = optionalString(record, 'whenToUse_zh')
+  const whenToUseEn = optionalString(record, 'whenToUse_en')
   return {
     name,
     description,
     ...(whenToUse !== undefined ? { whenToUse } : {}),
+    ...(descriptionZh !== undefined ? { descriptionZh } : {}),
+    ...(descriptionEn !== undefined ? { descriptionEn } : {}),
+    ...(whenToUseZh !== undefined ? { whenToUseZh } : {}),
+    ...(whenToUseEn !== undefined ? { whenToUseEn } : {}),
     body: raw.slice(closing.bodyStart).trim(),
   }
 }
@@ -201,14 +221,29 @@ export async function scanDirectory(root: string): Promise<SkillSummary[]> {
     if (entry.isDirectory()) {
       const parsed = await readSkillDoc(join(entryPath, 'SKILL.md'))
       if (parsed === undefined) continue
-      found.push({ name: parsed.name, description: parsed.description, path: entryPath, kind: 'bundle' })
+      found.push(toSummary(parsed, entryPath, 'bundle'))
     } else if (entry.isFile() && entry.name.endsWith('.md')) {
       const parsed = await readSkillDoc(entryPath)
       if (parsed === undefined) continue
-      found.push({ name: parsed.name, description: parsed.description, path: entryPath, kind: 'flat' })
+      found.push(toSummary(parsed, entryPath, 'flat'))
     }
   }
   return found
+}
+
+/** 把 ParsedSkill 组装成对外暴露的 SkillSummary（透传多语言字段）。 */
+function toSummary(parsed: ParsedSkill, path: string, kind: 'bundle' | 'flat'): SkillSummary {
+  return {
+    name: parsed.name,
+    description: parsed.description,
+    ...(parsed.descriptionZh !== undefined ? { descriptionZh: parsed.descriptionZh } : {}),
+    ...(parsed.descriptionEn !== undefined ? { descriptionEn: parsed.descriptionEn } : {}),
+    ...(parsed.whenToUse !== undefined ? { whenToUse: parsed.whenToUse } : {}),
+    ...(parsed.whenToUseZh !== undefined ? { whenToUseZh: parsed.whenToUseZh } : {}),
+    ...(parsed.whenToUseEn !== undefined ? { whenToUseEn: parsed.whenToUseEn } : {}),
+    path,
+    kind,
+  }
 }
 
 /** List every installed skill under installDir. */
@@ -236,7 +271,7 @@ export async function installBundleDir(sourceDir: string, installDir: string): P
       return base !== '.git' && base !== '.gitignore' && base !== '.DS_Store'
     },
   })
-  return { name: parsed.name, description: parsed.description, path: target, kind: 'bundle' }
+  return toSummary(parsed, target, 'bundle')
 }
 
 /** Install one flat <name>.md skill file into installDir/<name>.md . */
@@ -250,7 +285,7 @@ export async function installFlatFile(sourceFile: string, installDir: string, na
   await mkdir(installDir, { recursive: true })
   await rm(target, { force: true })
   await cp(sourceFile, target, { force: true })
-  return { name: parsed.name, description: parsed.description, path: target, kind: 'flat' }
+  return toSummary(parsed, target, 'flat')
 }
 
 /**

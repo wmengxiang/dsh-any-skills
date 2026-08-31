@@ -43,10 +43,18 @@ function parseSkillText(raw) {
   if (name2 === void 0 || description === void 0) return void 0;
   if (!isValidSkillName(name2)) return void 0;
   const whenToUse = optionalString(record, "whenToUse");
+  const descriptionZh = optionalString(record, "description_zh");
+  const descriptionEn = optionalString(record, "description_en");
+  const whenToUseZh = optionalString(record, "whenToUse_zh");
+  const whenToUseEn = optionalString(record, "whenToUse_en");
   return {
     name: name2,
     description,
     ...whenToUse !== void 0 ? { whenToUse } : {},
+    ...descriptionZh !== void 0 ? { descriptionZh } : {},
+    ...descriptionEn !== void 0 ? { descriptionEn } : {},
+    ...whenToUseZh !== void 0 ? { whenToUseZh } : {},
+    ...whenToUseEn !== void 0 ? { whenToUseEn } : {},
     body: raw.slice(closing.bodyStart).trim()
   };
 }
@@ -116,14 +124,27 @@ async function scanDirectory(root) {
     if (entry.isDirectory()) {
       const parsed = await readSkillDoc(join(entryPath, "SKILL.md"));
       if (parsed === void 0) continue;
-      found.push({ name: parsed.name, description: parsed.description, path: entryPath, kind: "bundle" });
+      found.push(toSummary(parsed, entryPath, "bundle"));
     } else if (entry.isFile() && entry.name.endsWith(".md")) {
       const parsed = await readSkillDoc(entryPath);
       if (parsed === void 0) continue;
-      found.push({ name: parsed.name, description: parsed.description, path: entryPath, kind: "flat" });
+      found.push(toSummary(parsed, entryPath, "flat"));
     }
   }
   return found;
+}
+function toSummary(parsed, path, kind) {
+  return {
+    name: parsed.name,
+    description: parsed.description,
+    ...parsed.descriptionZh !== void 0 ? { descriptionZh: parsed.descriptionZh } : {},
+    ...parsed.descriptionEn !== void 0 ? { descriptionEn: parsed.descriptionEn } : {},
+    ...parsed.whenToUse !== void 0 ? { whenToUse: parsed.whenToUse } : {},
+    ...parsed.whenToUseZh !== void 0 ? { whenToUseZh: parsed.whenToUseZh } : {},
+    ...parsed.whenToUseEn !== void 0 ? { whenToUseEn: parsed.whenToUseEn } : {},
+    path,
+    kind
+  };
 }
 async function listInstalled(installDir) {
   return scanDirectory(installDir);
@@ -144,7 +165,7 @@ async function installBundleDir(sourceDir, installDir) {
       return base !== ".git" && base !== ".gitignore" && base !== ".DS_Store";
     }
   });
-  return { name: parsed.name, description: parsed.description, path: target, kind: "bundle" };
+  return toSummary(parsed, target, "bundle");
 }
 async function installFlatFile(sourceFile, installDir, name2) {
   const parsed = await readSkillDoc(sourceFile);
@@ -156,7 +177,7 @@ async function installFlatFile(sourceFile, installDir, name2) {
   await mkdir(installDir, { recursive: true });
   await rm(target, { force: true });
   await cp(sourceFile, target, { force: true });
-  return { name: parsed.name, description: parsed.description, path: target, kind: "flat" };
+  return toSummary(parsed, target, "flat");
 }
 async function installAllFromRoot(root, installDir) {
   const found = await scanDirectory(root);

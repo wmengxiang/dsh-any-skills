@@ -102,6 +102,25 @@ description: 一句话描述
 - 导入时名称会自动规范化为 kebab-case（大写转小写、下划线转连字符等）
 - frontmatter 可选字段：`whenToUse`、`disable-model-invocation`、`user-invocable`、`metadata`
 
+### 多语言说明（跟随应用语言） / Localized descriptions
+
+列表与 ⚡ 选择器中的技能说明会**跟随 DSH 应用语言**（设置 → General → Language，zh/en）自动切换。技能作者可按需补充按语言区分的字段（缺省回退到 `description` / `whenToUse`）：
+
+```markdown
+---
+name: my-skill
+description: One-line summary.
+description_zh: 一句话中文说明。
+description_en: One-line summary (en).
+whenToUse: Use when the user asks about X.
+whenToUse_zh: 当用户询问 X 时使用。
+whenToUse_en: Use when the user asks about X (en).
+---
+```
+
+- 未提供对应语言字段时，显示原始 `description` / `whenToUse`（向后兼容所有现有技能）
+- 插件的自身界面文案（按钮/标签/提示）也随应用语言在 zh/en 间切换
+
 ## 配置 / Configuration
 
 可通过 profile 的 `cordis.patch.yml` 覆盖插件配置：

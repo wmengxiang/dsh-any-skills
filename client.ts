@@ -30,9 +30,207 @@ const USAGE_KEY = 'dsh-any-skills:usage'
 interface SkillView {
   name: string
   description: string
+  /** 可选多语言说明（SKILL.md frontmatter description_zh / description_en）。 */
+  descriptionZh?: string
+  descriptionEn?: string
+  /** 可选"何时使用"说明（whenToUse / whenToUse_zh / whenToUse_en）。 */
+  whenToUse?: string
+  whenToUseZh?: string
+  whenToUseEn?: string
   path: string
   kind: 'bundle' | 'flat'
   installed?: boolean
+}
+
+/* ---------------- locale & localized text ---------------- */
+
+export type Locale = 'zh' | 'en'
+
+/** 读取当前应用语言：dsh 把语言同步到 document.documentElement.lang（zh-CN / en）。 */
+export function currentLocale(): Locale {
+  try {
+    const lang = String(document.documentElement.lang ?? '').toLowerCase()
+    return lang.startsWith('zh') ? 'zh' : 'en'
+  } catch {
+    return 'en'
+  }
+}
+
+/**
+ * 按语言取字段：zh 优先 zh 值，否则（含未知语言）取 en 值，都没有则用 fallback。
+ */
+export function pickLocalized<T>(locale: Locale, zh: T | undefined, en: T | undefined, fallback: T): T {
+  if (locale === 'zh') return zh ?? fallback
+  return en ?? fallback
+}
+
+interface UiText {
+  usage: string
+  installed: string
+  installDirLabel: string
+  loading: string
+  noSkills: string
+  uninstall: string
+  noDescription: string
+  pickerTitle: string
+  pickerAria: string
+  searchPlaceholder: string
+  refresh: string
+  refreshAria: string
+  loadingSkills: string
+  noSkillsInstalled: string
+  noMatch: string
+  loadFailed: string
+  expandInstalled: string
+  collapseInstalled: string
+  pageTitle: string
+  pageSub: string
+  toggleLabel: string
+  toggleSub: string
+  importTitle: string
+  importSub: string
+  installTitle: string
+  installSub: string
+  importPlaceholder: string
+  installPlaceholder: string
+  importAll: string
+  importOne: string
+  installedTag: string
+  importing: string
+  countSuffix: string
+  installBtn: string
+  refreshBtn: string
+  scanningSources: string
+  groupNoSkills: string
+  dirTip: string
+  importBtn: string
+  localDirAria: string
+  installInputAria: string
+  restore: string
+  closeNotice: string
+  restoreHint: string
+  pickerOnNotice: string
+  pickerOffNotice: string
+  importedNotice: string
+  skippedSuffix: string
+  installedNotice: string
+  installDoneNotice: string
+  localPathRequired: string
+  remoteInputRequired: string
+}
+
+const ZH_TEXT: UiText = {
+  usage: '用法',
+  installed: '已安装技能',
+  installDirLabel: '安装目录',
+  loading: '正在读取…',
+  noSkills: '还没有安装任何技能。',
+  uninstall: '卸载',
+  noDescription: '(无描述)',
+  pickerTitle: '选择技能（插入 /技能名 到发送框）',
+  pickerAria: '选择技能',
+  searchPlaceholder: '搜索技能…',
+  refresh: '刷新技能列表',
+  refreshAria: '刷新技能列表',
+  loadingSkills: '加载中…',
+  noSkillsInstalled: '还没有安装技能。到 设置 → Skill 管理 导入。',
+  noMatch: '没有匹配的技能',
+  loadFailed: '加载失败',
+  expandInstalled: '点击展开已安装技能列表',
+  collapseInstalled: '点击折叠已安装技能列表',
+  pageTitle: 'Skill 管理',
+  pageSub: '技能存放于 ~/.dsh/skills，模型可自动读取；在对话框旁点击 ⚡ 按钮可插入 /技能名 调用。',
+  toggleLabel: '在对话输入框旁显示 ⚡ 技能选择按钮',
+  toggleSub: '关闭后仍可在输入框直接输入 /技能名 调用',
+  importTitle: '导入',
+  importSub: '从 Codex / Claude Code / OpenCode 或本机目录复制技能到 ~/.dsh/skills。',
+  installTitle: '安装',
+  installSub: '从 GitHub 或 npm 安装（支持批量，用空格/逗号/分号分隔）。',
+  importPlaceholder: '本机目录路径（含 SKILL.md 或技能文件）',
+  installPlaceholder: 'owner/repo 或 https://github.com/... 或 npm 包名，多个用空格分隔',
+  importAll: '导入全部',
+  importOne: '仅导入',
+  installedTag: '已安装',
+  importing: '安装中…',
+  countSuffix: ' 个技能',
+  installBtn: '安装',
+  refreshBtn: '刷新',
+  scanningSources: '正在扫描来源…',
+  groupNoSkills: '该目录下没有技能',
+  dirTip: '点击展开查看技能详情',
+  importBtn: '导入',
+  localDirAria: '本机目录路径',
+  installInputAria: 'GitHub 仓库或 npm 包名',
+  restore: '恢复',
+  closeNotice: '关闭提示',
+  restoreHint: '手动恢复：将回收目录移回安装目录（在终端执行 {cmd}），或直接点击「恢复」按钮。',
+  pickerOnNotice: '已开启 ⚡ 技能选择按钮（对话框旁）',
+  pickerOffNotice: '已关闭 ⚡ 技能选择按钮；仍可在输入框输入 /技能名 调用技能',
+  importedNotice: '已导入 {n} 个技能',
+  skippedSuffix: '（{n} 个已存在，跳过）',
+  installedNotice: '已安装 {n} 个技能（{ok}/{total} 个来源成功）',
+  installDoneNotice: '安装完成',
+  localPathRequired: '请输入本机目录路径',
+  remoteInputRequired: '请输入 GitHub 仓库（owner/repo 或 URL）或 npm 包名',
+}
+
+const EN_TEXT: UiText = {
+  usage: 'Usage',
+  installed: 'Installed Skills',
+  installDirLabel: 'Install directory',
+  loading: 'Loading…',
+  noSkills: 'No skills installed yet.',
+  uninstall: 'Uninstall',
+  noDescription: '(no description)',
+  pickerTitle: 'Pick a skill (inserts /skill-name into the input)',
+  pickerAria: 'Pick a skill',
+  searchPlaceholder: 'Search skills…',
+  refresh: 'Refresh skill list',
+  refreshAria: 'Refresh skill list',
+  loadingSkills: 'Loading…',
+  noSkillsInstalled: 'No skills installed yet. Import from Settings → Skill Manager.',
+  noMatch: 'No matching skills',
+  loadFailed: 'Failed to load',
+  expandInstalled: 'Click to expand the installed skills list',
+  collapseInstalled: 'Click to collapse the installed skills list',
+  pageTitle: 'Skill Manager',
+  pageSub: 'Skills live in ~/.dsh/skills and are read automatically by the model; click the ⚡ button beside the input to insert /skill-name.',
+  toggleLabel: 'Show the ⚡ skill picker beside the input',
+  toggleSub: 'When off, type /skill-name directly in the input',
+  importTitle: 'Import',
+  importSub: 'Copy skills from Codex / Claude Code / OpenCode or a local directory into ~/.dsh/skills.',
+  installTitle: 'Install',
+  installSub: 'Install from GitHub or npm (batch: space/comma/semicolon separated).',
+  importPlaceholder: 'Local directory path (contains SKILL.md or skill files)',
+  installPlaceholder: 'owner/repo or https://github.com/... or npm package, space-separated',
+  importAll: 'Import all',
+  importOne: 'Import only',
+  installedTag: 'Installed',
+  importing: 'Installing…',
+  countSuffix: ' skills',
+  installBtn: 'Install',
+  refreshBtn: 'Refresh',
+  scanningSources: 'Scanning sources…',
+  groupNoSkills: 'No skills in this directory',
+  dirTip: 'Click to expand skill details',
+  importBtn: 'Import',
+  localDirAria: 'Local directory path',
+  installInputAria: 'GitHub repo or npm package',
+  restore: 'Restore',
+  closeNotice: 'Dismiss',
+  restoreHint: 'Restore manually: move the trash directory back into the install directory (in a terminal: {cmd}), or click "Restore".',
+  pickerOnNotice: '⚡ skill picker enabled (beside the input)',
+  pickerOffNotice: '⚡ skill picker disabled; type /skill-name in the input to invoke skills',
+  importedNotice: 'Imported {n} skills',
+  skippedSuffix: ' ({n} already exist, skipped)',
+  installedNotice: 'Installed {n} skills ({ok}/{total} sources OK)',
+  installDoneNotice: 'Install finished',
+  localPathRequired: 'Enter a local directory path',
+  remoteInputRequired: 'Enter a GitHub repo (owner/repo or URL) or an npm package name',
+}
+
+export function uiText(locale: Locale): UiText {
+  return locale === 'zh' ? ZH_TEXT : EN_TEXT
 }
 
 interface SourceGroup {
@@ -480,48 +678,58 @@ function SkillPickerButton(props: PickerProps): ReturnType<typeof h> | null {
 
   if (!enabled) return null // 设置页关闭了 ⚡ 按钮入口
 
+  const locale = currentLocale()
+  const t = uiText(locale)
+
   return h('div', { ref: boxRef, style: { position: 'relative', display: 'inline-flex', flex: 'none' } },
     h('button', {
       type: 'button',
       className: 'dsh-as-btn' + (open ? ' dsh-as-open' : ''),
       onClick: toggle,
-      title: '选择技能（插入 /技能名 到发送框）',
-      'aria-label': '选择技能',
+      title: t.pickerTitle,
+      'aria-label': t.pickerAria,
       'aria-expanded': open,
     }, h(IconBolt, { size: 16 })),
-    open ? h('div', { className: 'dsh-as-pop', role: 'dialog', 'aria-label': '技能选择' },
+    open ? h('div', { className: 'dsh-as-pop', role: 'dialog', 'aria-label': t.pickerAria },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 4, padding: '8px 10px 2px' } },
         h('input', {
           className: 'dsh-as-search',
           style: { margin: 0, flex: 1 },
           value: query,
           onChange: (event: { currentTarget: { value: string } }) => setQuery(event.currentTarget.value),
-          placeholder: '搜索技能…',
+          placeholder: t.searchPlaceholder,
           autoFocus: true,
         }),
         h('button', {
           type: 'button',
           className: 'dsh-as-btn',
           onClick: () => void load(true),
-          title: '刷新技能列表',
-          'aria-label': '刷新技能列表',
+          title: t.refresh,
+          'aria-label': t.refreshAria,
         }, h(IconRefresh, { size: 12 })),
       ),
       error !== undefined
-        ? h('div', { className: 'dsh-as-status' }, `加载失败：${error}`)
+        ? h('div', { className: 'dsh-as-status' }, `${t.loadFailed}：${error}`)
         : skills === undefined
-          ? h('div', { className: 'dsh-as-status' }, '加载中…')
+          ? h('div', { className: 'dsh-as-status' }, t.loadingSkills)
           : h('div', { className: 'dsh-as-list' },
             filtered.length === 0
-              ? h('div', { className: 'dsh-as-status' }, skills.length === 0 ? '还没有安装技能。到 设置 → Skill 管理 导入。' : '没有匹配的技能')
-              : filtered.map((skill) => h('button', {
-                key: skill.name,
-                type: 'button',
-                className: 'dsh-as-item',
-                onClick: () => pick(skill.name),
-              },
-              h('span', { className: 'dsh-as-name' }, `/${skill.name}`),
-              h('span', { className: 'dsh-as-desc' }, skill.description ?? ''))),
+              ? h('div', { className: 'dsh-as-status' }, skills.length === 0 ? t.noSkillsInstalled : t.noMatch)
+              : filtered.map((skill) => {
+                const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description ?? '')
+                const usage = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse)
+                return h('button', {
+                  key: skill.name,
+                  type: 'button',
+                  className: 'dsh-as-item',
+                  onClick: () => pick(skill.name),
+                },
+                h('span', { className: 'dsh-as-name' }, `/${skill.name}`),
+                h('span', { className: 'dsh-as-desc' }, desc),
+                usage !== undefined && usage !== ''
+                  ? h('span', { className: 'dsh-as-desc' }, usage)
+                  : null)
+              }),
           ),
     ) : null,
   )
@@ -549,6 +757,8 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const [lastUninstall, setLastUninstall] = useState<UninstallInfo | null>(null)
   const [pickerEnabled, setPickerEnabledState] = useState<boolean>(() => isPickerEnabled())
   const [installedOpen, setInstalledOpen] = useState<boolean>(() => loadInstalledOpen())
+  const locale = currentLocale()
+  const t = uiText(locale)
 
   const toggleInstalled = () => {
     setInstalledOpen((open) => {
@@ -561,7 +771,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const togglePicker = (value: boolean) => {
     setPickerEnabledState(value)
     applyPickerEnabled(value)
-    setNotice(value ? '已开启 ⚡ 技能选择按钮（对话框旁）' : '已关闭 ⚡ 技能选择按钮；仍可在输入框输入 /技能名 调用技能')
+    setNotice(value ? t.pickerOnNotice : t.pickerOffNotice)
   }
 
   const refresh = useCallback(async () => {
@@ -617,23 +827,23 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
 
   const importTool = (group: SourceGroup) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id })
-    setNotice(`已导入 ${result.imported.length} 个技能${result.skipped !== undefined && result.skipped.length > 0 ? `（${result.skipped.length} 个已存在，跳过）` : ''}`)
+    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
     await refresh()
   })
 
   const importOne = (group: SourceGroup, skill: SkillView) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id, names: [skill.name] })
-    setNotice(`已导入 ${result.imported.length} 个技能${result.skipped !== undefined && result.skipped.length > 0 ? `（${result.skipped.length} 个已存在，跳过）` : ''}`)
+    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
     await refresh()
   })
 
   const importLocal = () => run(async () => {
     if (localPath.trim() === '') {
-      setError('请输入本机目录路径')
+      setError(t.localPathRequired)
       return
     }
     const result = await apiImport({ type: 'local', path: localPath.trim() })
-    setNotice(`已导入 ${result.imported.length} 个技能`)
+    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)))
     setLocalPath('')
     await refresh()
   })
@@ -641,7 +851,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const installRemote = () => run(async () => {
     const parts = remoteInput.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean)
     if (parts.length === 0) {
-      setError('请输入 GitHub 仓库（owner/repo 或 URL）或 npm 包名')
+      setError(t.remoteInputRequired)
       return
     }
     const sources = parts.map((part) => ({ type: guessSourceType(part), value: part }))
@@ -650,8 +860,11 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     const failed = result.results.filter((r) => !r.ok)
     setNotice(
       ok.length > 0
-        ? `已安装 ${ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0)} 个技能（${ok.length}/${result.results.length} 个来源成功）`
-        : '安装完成',
+        ? t.installedNotice
+            .replace('{n}', String(ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0)))
+            .replace('{ok}', String(ok.length))
+            .replace('{total}', String(result.results.length))
+        : t.installDoneNotice,
     )
     if (failed.length > 0) {
       setError(failed.map((f) => `${f.source}: ${f.message}`).join('；'))
@@ -665,14 +878,14 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   return h('div', { className: 'dsh-as-page', 'aria-busy': busy },
     h('header', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' } },
       h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-        h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 600 } }, 'Skill 管理'),
+        h('h2', { style: { margin: 0, fontSize: 18, fontWeight: 600 } }, t.pageTitle),
         busy ? h(IconRefresh, { spin: true }) : null,
       ),
-      h('button', { type: 'button', className: 'dsh-as-btn2', onClick: () => void refresh(), disabled: busy, title: '刷新' },
-        h(IconRefresh), '刷新'),
+      h('button', { type: 'button', className: 'dsh-as-btn2', onClick: () => void refresh(), disabled: busy, title: t.refreshBtn },
+        h(IconRefresh), t.refreshBtn),
     ),
     h('p', { className: 'dsh-as-sub', style: { marginTop: -6 } },
-      '技能存放于 ~/.dsh/skills，模型可自动读取；在对话框旁点击 ⚡ 按钮可插入 /技能名 调用。'),
+      t.pageSub),
 
     error !== undefined ? h('div', { className: 'dsh-as-err', role: 'alert' }, error) : null,
     notice !== undefined ? h('div', { className: 'dsh-as-ok', role: 'status' }, notice) : null,
@@ -681,24 +894,22 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 0 } },
           h('div', null, lastUninstall.message),
           h('div', { className: 'dsh-as-sub', style: { margin: 0 } },
-            '手动恢复：将回收目录移回安装目录（在终端执行 ',
-            h('code', { className: 'dsh-as-code' }, `mv ${installDir ?? '~/.dsh/skills'}/${lastUninstall.trash} ${installDir ?? '~/.dsh/skills'}/${lastUninstall.name}`),
-            '），或直接点击「恢复」按钮。'),
+            t.restoreHint.replace('{cmd}', `mv ${installDir ?? '~/.dsh/skills'}/${lastUninstall.trash} ${installDir ?? '~/.dsh/skills'}/${lastUninstall.name}`)),
         ),
         h('button', {
           type: 'button',
           className: 'dsh-as-btn2 dsh-as-primary',
           disabled: busy,
           onClick: () => void restore(lastUninstall),
-          title: `恢复 ${lastUninstall.name}`,
-        }, h(IconRefresh), '恢复'),
+          title: `${t.restore} ${lastUninstall.name}`,
+        }, h(IconRefresh), t.restore),
         h('button', {
           type: 'button',
           className: 'dsh-as-btn2',
           disabled: busy,
           onClick: () => setLastUninstall(null),
-          title: '关闭提示',
-          'aria-label': '关闭提示',
+          title: t.closeNotice,
+          'aria-label': t.closeNotice,
         }, '×'),
       )
       : null,
@@ -711,11 +922,11 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
             className: 'dsh-as-switch',
             checked: pickerEnabled,
             onChange: (event: { currentTarget: { checked: boolean } }) => togglePicker(event.currentTarget.checked),
-            'aria-label': '在对话输入框旁显示 ⚡ 技能选择按钮',
+            'aria-label': t.toggleLabel,
           }),
-          h('span', null, '在对话输入框旁显示 ⚡ 技能选择按钮'),
+          h('span', null, t.toggleLabel),
         ),
-        h('span', { className: 'dsh-as-sub', style: { margin: 0 } }, '关闭后仍可在输入框直接输入 /技能名 调用'),
+        h('span', { className: 'dsh-as-sub', style: { margin: 0 } }, t.toggleSub),
       ),
     ),
 
@@ -727,38 +938,45 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
           onClick: toggleInstalled,
           role: 'button',
           'aria-expanded': installedOpen,
-          title: installedOpen ? '点击折叠已安装技能列表' : '点击展开已安装技能列表',
+          title: installedOpen ? t.collapseInstalled : t.expandInstalled,
         },
           h('div', { className: 'dsh-as-row-main' },
             h('div', { className: 'dsh-as-row-name' },
-              '已安装技能',
-              installed !== null ? h('span', { className: 'dsh-as-count' }, `${installed.length} 个`) : null,
+              t.installed,
+              installed !== null ? h('span', { className: 'dsh-as-count' }, `${installed.length}${t.countSuffix}`) : null,
             ),
           ),
           h('span', { className: 'dsh-as-caret', 'aria-hidden': true }, installedOpen ? '▾' : '▸'),
         ),
         installedOpen
           ? h('div', { className: 'dsh-as-skill-list' },
-            h('p', { className: 'dsh-as-sub', style: { marginTop: 0 } }, `安装目录：${installDir ?? '…'}`),
+            h('p', { className: 'dsh-as-sub', style: { marginTop: 0 } }, `${t.installDirLabel}：${installDir ?? '…'}`),
             installed === null
-              ? h('p', { className: 'dsh-as-status' }, '正在读取…')
+              ? h('p', { className: 'dsh-as-status' }, t.loading)
               : installed.length === 0
-                ? h('p', { className: 'dsh-as-status' }, '还没有安装任何技能。')
+                ? h('p', { className: 'dsh-as-status' }, t.noSkills)
                 : h('div', { style: { display: 'grid', gap: 8 } },
-                  installed.map((skill) => h('div', { key: skill.name, className: 'dsh-as-row' },
-                    h('div', { className: 'dsh-as-row-main' },
-                      h('div', { className: 'dsh-as-row-name' }, `/${skill.name}`),
-                      h('div', { className: 'dsh-as-row-desc' }, skill.description || '(无描述)'),
-                    ),
-                    h('button', {
-                      type: 'button',
-                      className: 'dsh-as-btn2 dsh-as-danger',
-                      disabled: busy,
-                      onClick: () => void uninstall(skill.name),
-                      title: `卸载 ${skill.name}`,
-                      'aria-label': `卸载 ${skill.name}`,
-                    }, h(IconTrash), '卸载'),
-                  )),
+                  installed.map((skill) => {
+                    const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription
+                    const usage = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse)
+                    return h('div', { key: skill.name, className: 'dsh-as-row' },
+                      h('div', { className: 'dsh-as-row-main' },
+                        h('div', { className: 'dsh-as-row-name' }, `/${skill.name}`),
+                        h('div', { className: 'dsh-as-row-desc' }, desc),
+                        usage !== undefined && usage !== ''
+                          ? h('div', { className: 'dsh-as-row-desc' }, `${t.usage}：${usage}`)
+                          : null,
+                      ),
+                      h('button', {
+                        type: 'button',
+                        className: 'dsh-as-btn2 dsh-as-danger',
+                        disabled: busy,
+                        onClick: () => void uninstall(skill.name),
+                        title: `${t.uninstall} ${skill.name}`,
+                        'aria-label': `${t.uninstall} ${skill.name}`,
+                      }, h(IconTrash), t.uninstall),
+                    )
+                  }),
                 ),
           )
           : null,
@@ -766,13 +984,13 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     ),
 
     h('section', { className: 'dsh-as-card' },
-      h('h3', null, '导入'),
-      h('p', { className: 'dsh-as-sub' }, '从 Codex / Claude Code / OpenCode 或本机目录复制技能到 ~/.dsh/skills。'),
+      h('h3', null, t.importTitle),
+      h('p', { className: 'dsh-as-sub' }, t.importSub),
       srcCwd !== undefined
         ? h('p', { className: 'dsh-as-sub' }, `项目级目录基于服务启动目录检测：${srcCwd}`)
         : null,
       sources === null
-        ? h('p', { className: 'dsh-as-status' }, '正在扫描来源…')
+        ? h('p', { className: 'dsh-as-status' }, t.scanningSources)
         : h('div', { style: { display: 'grid', gap: 8 } },
           sources.filter((s) => s.exists || s.skills.length > 0).map((group) => {
             const open = expanded[group.id] === true
@@ -783,12 +1001,12 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
                 onClick: () => setExpanded((prev) => ({ ...prev, [group.id]: !open })),
                 role: 'button',
                 'aria-expanded': open,
-                title: '点击展开查看技能详情',
+                title: t.dirTip,
               },
                 h('div', { className: 'dsh-as-row-main' },
                   h('div', { className: 'dsh-as-row-name' },
                     group.label,
-                    h('span', { className: 'dsh-as-count' }, `${group.skills.length} 个技能`),
+                    h('span', { className: 'dsh-as-count' }, `${group.skills.length}${t.countSuffix}`),
                   ),
                   h('div', { className: 'dsh-as-row-desc' }, group.path),
                 ),
@@ -800,32 +1018,32 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
                     event.stopPropagation()
                     void importTool(group)
                   },
-                  title: group.skills.length === 0 ? '该目录下没有技能' : `导入 ${group.label} 的全部 ${group.skills.length} 个技能`,
-                }, h(IconBolt, { size: 12 }), '导入全部'),
+                  title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`,
+                }, h(IconBolt, { size: 12 }), t.importAll),
                 h('span', { className: 'dsh-as-caret', 'aria-hidden': true }, open ? '▾' : '▸'),
               ),
               open
                 ? h('div', { className: 'dsh-as-skill-list' },
                   group.skills.length === 0
-                    ? h('div', { className: 'dsh-as-status' }, '该目录下没有技能')
+                    ? h('div', { className: 'dsh-as-status' }, t.groupNoSkills)
                     : group.skills.map((skill) => h('div', { key: skill.name, className: 'dsh-as-skill-row' },
                       h('div', { className: 'dsh-as-row-main' },
                         h('div', { className: 'dsh-as-row-name' },
                           `/${skill.name}`,
-                          skill.installed === true ? h('span', { className: 'dsh-as-installed' }, ' ✓ 已安装') : null,
+                          skill.installed === true ? h('span', { className: 'dsh-as-installed' }, ` ✓ ${t.installedTag}`) : null,
                         ),
-                        h('div', { className: 'dsh-as-row-desc' }, skill.description || '(无描述)'),
+                        h('div', { className: 'dsh-as-row-desc' }, pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription),
                         h('div', { className: 'dsh-as-row-desc' }, skill.path),
                       ),
                       skill.installed === true
-                        ? h('span', { className: 'dsh-as-status', style: { flex: 'none' } }, '已安装')
+                        ? h('span', { className: 'dsh-as-status', style: { flex: 'none' } }, t.installedTag)
                         : h('button', {
                           type: 'button',
                           className: 'dsh-as-btn2',
                           disabled: busy,
                           onClick: () => void importOne(group, skill),
-                          title: `仅导入 ${skill.name}`,
-                        }, h(IconBolt, { size: 12 }), '导入'),
+                          title: `${t.importOne} ${skill.name}`,
+                        }, h(IconBolt, { size: 12 }), t.importBtn),
                     )),
                 )
                 : null,
@@ -836,28 +1054,28 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
           className: 'dsh-as-input',
           value: localPath,
           onChange: (event: { currentTarget: { value: string } }) => setLocalPath(event.currentTarget.value),
-          placeholder: '本机目录路径（含 SKILL.md 或技能文件）',
-          'aria-label': '本机目录路径',
+          placeholder: t.importPlaceholder,
+          'aria-label': t.localDirAria,
         }),
         h('button', {
           type: 'button',
           className: 'dsh-as-btn2 dsh-as-primary',
           disabled: busy || localPath.trim() === '',
           onClick: () => void importLocal(),
-        }, '导入'),
+        }, t.importBtn),
       ),
     ),
 
     h('section', { className: 'dsh-as-card' },
-      h('h3', null, '安装'),
-      h('p', { className: 'dsh-as-sub' }, '从 GitHub 或 npm 安装（支持批量，用空格/逗号/分号分隔）。'),
+      h('h3', null, t.installTitle),
+      h('p', { className: 'dsh-as-sub' }, t.installSub),
       h('div', { className: 'dsh-as-toolbar' },
         h('input', {
           className: 'dsh-as-input',
           value: remoteInput,
           onChange: (event: { currentTarget: { value: string } }) => setRemoteInput(event.currentTarget.value),
-          placeholder: 'owner/repo 或 https://github.com/... 或 npm 包名，多个用空格分隔',
-          'aria-label': 'GitHub 仓库或 npm 包名',
+          placeholder: t.installPlaceholder,
+          'aria-label': t.installInputAria,
         }),
         h('button', {
           type: 'button',
@@ -865,7 +1083,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
           disabled: busy || remoteInput.trim() === '',
           onClick: () => void installRemote(),
           style: { minWidth: 84 },
-        }, busy ? h(IconRefresh, { size: 12, spin: true }) : null, busy ? '安装中…' : '安装'),
+        }, busy ? h(IconRefresh, { size: 12, spin: true }) : null, busy ? t.importing : t.installBtn),
       ),
     ),
   )

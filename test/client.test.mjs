@@ -226,6 +226,43 @@ test('client bundle: settings section renders the installed-list collapse header
   assert.equal(header.props['aria-expanded'], true, 'expanded by stored preference')
 })
 
+test('client bundle: pickLocalized selects the locale-matching field with fallback', () => {
+  const { pickLocalized } = loadClientBundle()
+  assert.equal(pickLocalized('zh', '中文说明', 'English desc', 'Fallback'), '中文说明')
+  assert.equal(pickLocalized('en', '中文说明', 'English desc', 'Fallback'), 'English desc')
+  assert.equal(pickLocalized('zh', undefined, 'English desc', 'Fallback'), 'Fallback', 'zh missing → fallback')
+  assert.equal(pickLocalized('en', '中文说明', undefined, 'Fallback'), 'Fallback', 'en missing → fallback')
+  assert.equal(pickLocalized('zh', undefined, undefined, 'Fallback'), 'Fallback')
+  assert.equal(pickLocalized('fr', '中文说明', 'English desc', 'Fallback'), 'English desc', 'unknown locale → en branch')
+})
+
+test('client bundle: currentLocale reads the document language', () => {
+  const zh = loadClientBundle({
+    document: { documentElement: { lang: 'zh-CN' } },
+  })
+  assert.equal(zh.currentLocale(), 'zh')
+
+  const en = loadClientBundle({
+    document: { documentElement: { lang: 'en' } },
+  })
+  assert.equal(en.currentLocale(), 'en')
+
+  const none = loadClientBundle()
+  assert.equal(none.currentLocale(), 'en', 'no document → en default')
+})
+
+test('client bundle: UI text dictionary covers both locales', () => {
+  const { uiText } = loadClientBundle()
+  const zh = uiText('zh')
+  const en = uiText('en')
+  assert.equal(zh.usage, '用法')
+  assert.equal(en.usage, 'Usage')
+  assert.equal(zh.installed, '已安装技能')
+  assert.equal(en.installed, 'Installed Skills')
+  assert.ok(typeof zh.installDirLabel === 'string' && zh.installDirLabel.length > 0)
+  assert.ok(typeof en.installDirLabel === 'string' && en.installDirLabel.length > 0)
+})
+
 test('client bundle: CSS uses official theme tokens only (light/dark adaptive)', () => {
   const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
   for (const banned of [

@@ -23,9 +23,12 @@ var client_exports = {};
 __export(client_exports, {
   apply: () => apply,
   buildInsertedDraft: () => buildInsertedDraft,
+  currentLocale: () => currentLocale,
   inject: () => inject,
   loadInstalledOpen: () => loadInstalledOpen,
-  saveInstalledOpen: () => saveInstalledOpen
+  pickLocalized: () => pickLocalized,
+  saveInstalledOpen: () => saveInstalledOpen,
+  uiText: () => uiText
 });
 module.exports = __toCommonJS(client_exports);
 var import_react = require("react");
@@ -33,6 +36,129 @@ var inject = ["slots"];
 var NS = "dsh-any-skills";
 var API = "/api/skills";
 var USAGE_KEY = "dsh-any-skills:usage";
+function currentLocale() {
+  try {
+    const lang = String(document.documentElement.lang ?? "").toLowerCase();
+    return lang.startsWith("zh") ? "zh" : "en";
+  } catch {
+    return "en";
+  }
+}
+function pickLocalized(locale, zh, en, fallback) {
+  if (locale === "zh") return zh ?? fallback;
+  return en ?? fallback;
+}
+var ZH_TEXT = {
+  usage: "\u7528\u6CD5",
+  installed: "\u5DF2\u5B89\u88C5\u6280\u80FD",
+  installDirLabel: "\u5B89\u88C5\u76EE\u5F55",
+  loading: "\u6B63\u5728\u8BFB\u53D6\u2026",
+  noSkills: "\u8FD8\u6CA1\u6709\u5B89\u88C5\u4EFB\u4F55\u6280\u80FD\u3002",
+  uninstall: "\u5378\u8F7D",
+  noDescription: "(\u65E0\u63CF\u8FF0)",
+  pickerTitle: "\u9009\u62E9\u6280\u80FD\uFF08\u63D2\u5165 /\u6280\u80FD\u540D \u5230\u53D1\u9001\u6846\uFF09",
+  pickerAria: "\u9009\u62E9\u6280\u80FD",
+  searchPlaceholder: "\u641C\u7D22\u6280\u80FD\u2026",
+  refresh: "\u5237\u65B0\u6280\u80FD\u5217\u8868",
+  refreshAria: "\u5237\u65B0\u6280\u80FD\u5217\u8868",
+  loadingSkills: "\u52A0\u8F7D\u4E2D\u2026",
+  noSkillsInstalled: "\u8FD8\u6CA1\u6709\u5B89\u88C5\u6280\u80FD\u3002\u5230 \u8BBE\u7F6E \u2192 Skill \u7BA1\u7406 \u5BFC\u5165\u3002",
+  noMatch: "\u6CA1\u6709\u5339\u914D\u7684\u6280\u80FD",
+  loadFailed: "\u52A0\u8F7D\u5931\u8D25",
+  expandInstalled: "\u70B9\u51FB\u5C55\u5F00\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868",
+  collapseInstalled: "\u70B9\u51FB\u6298\u53E0\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868",
+  pageTitle: "Skill \u7BA1\u7406",
+  pageSub: "\u6280\u80FD\u5B58\u653E\u4E8E ~/.dsh/skills\uFF0C\u6A21\u578B\u53EF\u81EA\u52A8\u8BFB\u53D6\uFF1B\u5728\u5BF9\u8BDD\u6846\u65C1\u70B9\u51FB \u26A1 \u6309\u94AE\u53EF\u63D2\u5165 /\u6280\u80FD\u540D \u8C03\u7528\u3002",
+  toggleLabel: "\u5728\u5BF9\u8BDD\u8F93\u5165\u6846\u65C1\u663E\u793A \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE",
+  toggleSub: "\u5173\u95ED\u540E\u4ECD\u53EF\u5728\u8F93\u5165\u6846\u76F4\u63A5\u8F93\u5165 /\u6280\u80FD\u540D \u8C03\u7528",
+  importTitle: "\u5BFC\u5165",
+  importSub: "\u4ECE Codex / Claude Code / OpenCode \u6216\u672C\u673A\u76EE\u5F55\u590D\u5236\u6280\u80FD\u5230 ~/.dsh/skills\u3002",
+  installTitle: "\u5B89\u88C5",
+  installSub: "\u4ECE GitHub \u6216 npm \u5B89\u88C5\uFF08\u652F\u6301\u6279\u91CF\uFF0C\u7528\u7A7A\u683C/\u9017\u53F7/\u5206\u53F7\u5206\u9694\uFF09\u3002",
+  importPlaceholder: "\u672C\u673A\u76EE\u5F55\u8DEF\u5F84\uFF08\u542B SKILL.md \u6216\u6280\u80FD\u6587\u4EF6\uFF09",
+  installPlaceholder: "owner/repo \u6216 https://github.com/... \u6216 npm \u5305\u540D\uFF0C\u591A\u4E2A\u7528\u7A7A\u683C\u5206\u9694",
+  importAll: "\u5BFC\u5165\u5168\u90E8",
+  importOne: "\u4EC5\u5BFC\u5165",
+  installedTag: "\u5DF2\u5B89\u88C5",
+  importing: "\u5B89\u88C5\u4E2D\u2026",
+  countSuffix: " \u4E2A\u6280\u80FD",
+  installBtn: "\u5B89\u88C5",
+  refreshBtn: "\u5237\u65B0",
+  scanningSources: "\u6B63\u5728\u626B\u63CF\u6765\u6E90\u2026",
+  groupNoSkills: "\u8BE5\u76EE\u5F55\u4E0B\u6CA1\u6709\u6280\u80FD",
+  dirTip: "\u70B9\u51FB\u5C55\u5F00\u67E5\u770B\u6280\u80FD\u8BE6\u60C5",
+  importBtn: "\u5BFC\u5165",
+  localDirAria: "\u672C\u673A\u76EE\u5F55\u8DEF\u5F84",
+  installInputAria: "GitHub \u4ED3\u5E93\u6216 npm \u5305\u540D",
+  restore: "\u6062\u590D",
+  closeNotice: "\u5173\u95ED\u63D0\u793A",
+  restoreHint: "\u624B\u52A8\u6062\u590D\uFF1A\u5C06\u56DE\u6536\u76EE\u5F55\u79FB\u56DE\u5B89\u88C5\u76EE\u5F55\uFF08\u5728\u7EC8\u7AEF\u6267\u884C {cmd}\uFF09\uFF0C\u6216\u76F4\u63A5\u70B9\u51FB\u300C\u6062\u590D\u300D\u6309\u94AE\u3002",
+  pickerOnNotice: "\u5DF2\u5F00\u542F \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE\uFF08\u5BF9\u8BDD\u6846\u65C1\uFF09",
+  pickerOffNotice: "\u5DF2\u5173\u95ED \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE\uFF1B\u4ECD\u53EF\u5728\u8F93\u5165\u6846\u8F93\u5165 /\u6280\u80FD\u540D \u8C03\u7528\u6280\u80FD",
+  importedNotice: "\u5DF2\u5BFC\u5165 {n} \u4E2A\u6280\u80FD",
+  skippedSuffix: "\uFF08{n} \u4E2A\u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF09",
+  installedNotice: "\u5DF2\u5B89\u88C5 {n} \u4E2A\u6280\u80FD\uFF08{ok}/{total} \u4E2A\u6765\u6E90\u6210\u529F\uFF09",
+  installDoneNotice: "\u5B89\u88C5\u5B8C\u6210",
+  localPathRequired: "\u8BF7\u8F93\u5165\u672C\u673A\u76EE\u5F55\u8DEF\u5F84",
+  remoteInputRequired: "\u8BF7\u8F93\u5165 GitHub \u4ED3\u5E93\uFF08owner/repo \u6216 URL\uFF09\u6216 npm \u5305\u540D"
+};
+var EN_TEXT = {
+  usage: "Usage",
+  installed: "Installed Skills",
+  installDirLabel: "Install directory",
+  loading: "Loading\u2026",
+  noSkills: "No skills installed yet.",
+  uninstall: "Uninstall",
+  noDescription: "(no description)",
+  pickerTitle: "Pick a skill (inserts /skill-name into the input)",
+  pickerAria: "Pick a skill",
+  searchPlaceholder: "Search skills\u2026",
+  refresh: "Refresh skill list",
+  refreshAria: "Refresh skill list",
+  loadingSkills: "Loading\u2026",
+  noSkillsInstalled: "No skills installed yet. Import from Settings \u2192 Skill Manager.",
+  noMatch: "No matching skills",
+  loadFailed: "Failed to load",
+  expandInstalled: "Click to expand the installed skills list",
+  collapseInstalled: "Click to collapse the installed skills list",
+  pageTitle: "Skill Manager",
+  pageSub: "Skills live in ~/.dsh/skills and are read automatically by the model; click the \u26A1 button beside the input to insert /skill-name.",
+  toggleLabel: "Show the \u26A1 skill picker beside the input",
+  toggleSub: "When off, type /skill-name directly in the input",
+  importTitle: "Import",
+  importSub: "Copy skills from Codex / Claude Code / OpenCode or a local directory into ~/.dsh/skills.",
+  installTitle: "Install",
+  installSub: "Install from GitHub or npm (batch: space/comma/semicolon separated).",
+  importPlaceholder: "Local directory path (contains SKILL.md or skill files)",
+  installPlaceholder: "owner/repo or https://github.com/... or npm package, space-separated",
+  importAll: "Import all",
+  importOne: "Import only",
+  installedTag: "Installed",
+  importing: "Installing\u2026",
+  countSuffix: " skills",
+  installBtn: "Install",
+  refreshBtn: "Refresh",
+  scanningSources: "Scanning sources\u2026",
+  groupNoSkills: "No skills in this directory",
+  dirTip: "Click to expand skill details",
+  importBtn: "Import",
+  localDirAria: "Local directory path",
+  installInputAria: "GitHub repo or npm package",
+  restore: "Restore",
+  closeNotice: "Dismiss",
+  restoreHint: 'Restore manually: move the trash directory back into the install directory (in a terminal: {cmd}), or click "Restore".',
+  pickerOnNotice: "\u26A1 skill picker enabled (beside the input)",
+  pickerOffNotice: "\u26A1 skill picker disabled; type /skill-name in the input to invoke skills",
+  importedNotice: "Imported {n} skills",
+  skippedSuffix: " ({n} already exist, skipped)",
+  installedNotice: "Installed {n} skills ({ok}/{total} sources OK)",
+  installDoneNotice: "Install finished",
+  localPathRequired: "Enter a local directory path",
+  remoteInputRequired: "Enter a GitHub repo (owner/repo or URL) or an npm package name"
+};
+function uiText(locale) {
+  return locale === "zh" ? ZH_TEXT : EN_TEXT;
+}
 async function api(path, init) {
   const res = await fetch(path, {
     ...init,
@@ -368,6 +494,8 @@ function SkillPickerButton(props) {
   const q = query.trim().toLowerCase();
   const filtered = ordered.filter((skill) => q === "" || skill.name.toLowerCase().includes(q) || String(skill.description ?? "").toLowerCase().includes(q)).slice(0, 80);
   if (!enabled) return null;
+  const locale = currentLocale();
+  const t = uiText(locale);
   return (0, import_react.createElement)(
     "div",
     { ref: boxRef, style: { position: "relative", display: "inline-flex", flex: "none" } },
@@ -375,13 +503,13 @@ function SkillPickerButton(props) {
       type: "button",
       className: "dsh-as-btn" + (open ? " dsh-as-open" : ""),
       onClick: toggle,
-      title: "\u9009\u62E9\u6280\u80FD\uFF08\u63D2\u5165 /\u6280\u80FD\u540D \u5230\u53D1\u9001\u6846\uFF09",
-      "aria-label": "\u9009\u62E9\u6280\u80FD",
+      title: t.pickerTitle,
+      "aria-label": t.pickerAria,
       "aria-expanded": open
     }, (0, import_react.createElement)(IconBolt, { size: 16 })),
     open ? (0, import_react.createElement)(
       "div",
-      { className: "dsh-as-pop", role: "dialog", "aria-label": "\u6280\u80FD\u9009\u62E9" },
+      { className: "dsh-as-pop", role: "dialog", "aria-label": t.pickerAria },
       (0, import_react.createElement)(
         "div",
         { style: { display: "flex", alignItems: "center", gap: 4, padding: "8px 10px 2px" } },
@@ -390,31 +518,36 @@ function SkillPickerButton(props) {
           style: { margin: 0, flex: 1 },
           value: query,
           onChange: (event) => setQuery(event.currentTarget.value),
-          placeholder: "\u641C\u7D22\u6280\u80FD\u2026",
+          placeholder: t.searchPlaceholder,
           autoFocus: true
         }),
         (0, import_react.createElement)("button", {
           type: "button",
           className: "dsh-as-btn",
           onClick: () => void load(true),
-          title: "\u5237\u65B0\u6280\u80FD\u5217\u8868",
-          "aria-label": "\u5237\u65B0\u6280\u80FD\u5217\u8868"
+          title: t.refresh,
+          "aria-label": t.refreshAria
         }, (0, import_react.createElement)(IconRefresh, { size: 12 }))
       ),
-      error !== void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, `\u52A0\u8F7D\u5931\u8D25\uFF1A${error}`) : skills === void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, "\u52A0\u8F7D\u4E2D\u2026") : (0, import_react.createElement)(
+      error !== void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, `${t.loadFailed}\uFF1A${error}`) : skills === void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, t.loadingSkills) : (0, import_react.createElement)(
         "div",
         { className: "dsh-as-list" },
-        filtered.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, skills.length === 0 ? "\u8FD8\u6CA1\u6709\u5B89\u88C5\u6280\u80FD\u3002\u5230 \u8BBE\u7F6E \u2192 Skill \u7BA1\u7406 \u5BFC\u5165\u3002" : "\u6CA1\u6709\u5339\u914D\u7684\u6280\u80FD") : filtered.map((skill) => (0, import_react.createElement)(
-          "button",
-          {
-            key: skill.name,
-            type: "button",
-            className: "dsh-as-item",
-            onClick: () => pick(skill.name)
-          },
-          (0, import_react.createElement)("span", { className: "dsh-as-name" }, `/${skill.name}`),
-          (0, import_react.createElement)("span", { className: "dsh-as-desc" }, skill.description ?? "")
-        ))
+        filtered.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, skills.length === 0 ? t.noSkillsInstalled : t.noMatch) : filtered.map((skill) => {
+          const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description ?? "");
+          const usage2 = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse);
+          return (0, import_react.createElement)(
+            "button",
+            {
+              key: skill.name,
+              type: "button",
+              className: "dsh-as-item",
+              onClick: () => pick(skill.name)
+            },
+            (0, import_react.createElement)("span", { className: "dsh-as-name" }, `/${skill.name}`),
+            (0, import_react.createElement)("span", { className: "dsh-as-desc" }, desc),
+            usage2 !== void 0 && usage2 !== "" ? (0, import_react.createElement)("span", { className: "dsh-as-desc" }, usage2) : null
+          );
+        })
       )
     ) : null
   );
@@ -433,6 +566,8 @@ function SkillsSettingsSection() {
   const [lastUninstall, setLastUninstall] = (0, import_react.useState)(null);
   const [pickerEnabled, setPickerEnabledState] = (0, import_react.useState)(() => isPickerEnabled());
   const [installedOpen, setInstalledOpen] = (0, import_react.useState)(() => loadInstalledOpen());
+  const locale = currentLocale();
+  const t = uiText(locale);
   const toggleInstalled = () => {
     setInstalledOpen((open) => {
       const next = !open;
@@ -443,7 +578,7 @@ function SkillsSettingsSection() {
   const togglePicker = (value) => {
     setPickerEnabledState(value);
     applyPickerEnabled(value);
-    setNotice(value ? "\u5DF2\u5F00\u542F \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE\uFF08\u5BF9\u8BDD\u6846\u65C1\uFF09" : "\u5DF2\u5173\u95ED \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE\uFF1B\u4ECD\u53EF\u5728\u8F93\u5165\u6846\u8F93\u5165 /\u6280\u80FD\u540D \u8C03\u7528\u6280\u80FD");
+    setNotice(value ? t.pickerOnNotice : t.pickerOffNotice);
   };
   const refresh = (0, import_react.useCallback)(async () => {
     setBusy(true);
@@ -493,28 +628,28 @@ function SkillsSettingsSection() {
   });
   const importTool = (group) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id });
-    setNotice(`\u5DF2\u5BFC\u5165 ${result.imported.length} \u4E2A\u6280\u80FD${result.skipped !== void 0 && result.skipped.length > 0 ? `\uFF08${result.skipped.length} \u4E2A\u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF09` : ""}`);
+    setNotice(t.importedNotice.replace("{n}", String(result.imported.length)) + (result.skipped !== void 0 && result.skipped.length > 0 ? t.skippedSuffix.replace("{n}", String(result.skipped.length)) : ""));
     await refresh();
   });
   const importOne = (group, skill) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id, names: [skill.name] });
-    setNotice(`\u5DF2\u5BFC\u5165 ${result.imported.length} \u4E2A\u6280\u80FD${result.skipped !== void 0 && result.skipped.length > 0 ? `\uFF08${result.skipped.length} \u4E2A\u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF09` : ""}`);
+    setNotice(t.importedNotice.replace("{n}", String(result.imported.length)) + (result.skipped !== void 0 && result.skipped.length > 0 ? t.skippedSuffix.replace("{n}", String(result.skipped.length)) : ""));
     await refresh();
   });
   const importLocal = () => run(async () => {
     if (localPath.trim() === "") {
-      setError("\u8BF7\u8F93\u5165\u672C\u673A\u76EE\u5F55\u8DEF\u5F84");
+      setError(t.localPathRequired);
       return;
     }
     const result = await apiImport({ type: "local", path: localPath.trim() });
-    setNotice(`\u5DF2\u5BFC\u5165 ${result.imported.length} \u4E2A\u6280\u80FD`);
+    setNotice(t.importedNotice.replace("{n}", String(result.imported.length)));
     setLocalPath("");
     await refresh();
   });
   const installRemote = () => run(async () => {
     const parts = remoteInput.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean);
     if (parts.length === 0) {
-      setError("\u8BF7\u8F93\u5165 GitHub \u4ED3\u5E93\uFF08owner/repo \u6216 URL\uFF09\u6216 npm \u5305\u540D");
+      setError(t.remoteInputRequired);
       return;
     }
     const sources2 = parts.map((part) => ({ type: guessSourceType(part), value: part }));
@@ -522,7 +657,7 @@ function SkillsSettingsSection() {
     const ok = result.results.filter((r) => r.ok);
     const failed = result.results.filter((r) => !r.ok);
     setNotice(
-      ok.length > 0 ? `\u5DF2\u5B89\u88C5 ${ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0)} \u4E2A\u6280\u80FD\uFF08${ok.length}/${result.results.length} \u4E2A\u6765\u6E90\u6210\u529F\uFF09` : "\u5B89\u88C5\u5B8C\u6210"
+      ok.length > 0 ? t.installedNotice.replace("{n}", String(ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0))).replace("{ok}", String(ok.length)).replace("{total}", String(result.results.length)) : t.installDoneNotice
     );
     if (failed.length > 0) {
       setError(failed.map((f) => `${f.source}: ${f.message}`).join("\uFF1B"));
@@ -541,20 +676,20 @@ function SkillsSettingsSection() {
       (0, import_react.createElement)(
         "div",
         { style: { display: "flex", alignItems: "center", gap: 8 } },
-        (0, import_react.createElement)("h2", { style: { margin: 0, fontSize: 18, fontWeight: 600 } }, "Skill \u7BA1\u7406"),
+        (0, import_react.createElement)("h2", { style: { margin: 0, fontSize: 18, fontWeight: 600 } }, t.pageTitle),
         busy ? (0, import_react.createElement)(IconRefresh, { spin: true }) : null
       ),
       (0, import_react.createElement)(
         "button",
-        { type: "button", className: "dsh-as-btn2", onClick: () => void refresh(), disabled: busy, title: "\u5237\u65B0" },
+        { type: "button", className: "dsh-as-btn2", onClick: () => void refresh(), disabled: busy, title: t.refreshBtn },
         (0, import_react.createElement)(IconRefresh),
-        "\u5237\u65B0"
+        t.refreshBtn
       )
     ),
     (0, import_react.createElement)(
       "p",
       { className: "dsh-as-sub", style: { marginTop: -6 } },
-      "\u6280\u80FD\u5B58\u653E\u4E8E ~/.dsh/skills\uFF0C\u6A21\u578B\u53EF\u81EA\u52A8\u8BFB\u53D6\uFF1B\u5728\u5BF9\u8BDD\u6846\u65C1\u70B9\u51FB \u26A1 \u6309\u94AE\u53EF\u63D2\u5165 /\u6280\u80FD\u540D \u8C03\u7528\u3002"
+      t.pageSub
     ),
     error !== void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-err", role: "alert" }, error) : null,
     notice !== void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-ok", role: "status" }, notice) : null,
@@ -568,9 +703,7 @@ function SkillsSettingsSection() {
         (0, import_react.createElement)(
           "div",
           { className: "dsh-as-sub", style: { margin: 0 } },
-          "\u624B\u52A8\u6062\u590D\uFF1A\u5C06\u56DE\u6536\u76EE\u5F55\u79FB\u56DE\u5B89\u88C5\u76EE\u5F55\uFF08\u5728\u7EC8\u7AEF\u6267\u884C ",
-          (0, import_react.createElement)("code", { className: "dsh-as-code" }, `mv ${installDir ?? "~/.dsh/skills"}/${lastUninstall.trash} ${installDir ?? "~/.dsh/skills"}/${lastUninstall.name}`),
-          "\uFF09\uFF0C\u6216\u76F4\u63A5\u70B9\u51FB\u300C\u6062\u590D\u300D\u6309\u94AE\u3002"
+          t.restoreHint.replace("{cmd}", `mv ${installDir ?? "~/.dsh/skills"}/${lastUninstall.trash} ${installDir ?? "~/.dsh/skills"}/${lastUninstall.name}`)
         )
       ),
       (0, import_react.createElement)("button", {
@@ -578,15 +711,15 @@ function SkillsSettingsSection() {
         className: "dsh-as-btn2 dsh-as-primary",
         disabled: busy,
         onClick: () => void restore(lastUninstall),
-        title: `\u6062\u590D ${lastUninstall.name}`
-      }, (0, import_react.createElement)(IconRefresh), "\u6062\u590D"),
+        title: `${t.restore} ${lastUninstall.name}`
+      }, (0, import_react.createElement)(IconRefresh), t.restore),
       (0, import_react.createElement)("button", {
         type: "button",
         className: "dsh-as-btn2",
         disabled: busy,
         onClick: () => setLastUninstall(null),
-        title: "\u5173\u95ED\u63D0\u793A",
-        "aria-label": "\u5173\u95ED\u63D0\u793A"
+        title: t.closeNotice,
+        "aria-label": t.closeNotice
       }, "\xD7")
     ) : null,
     (0, import_react.createElement)(
@@ -603,11 +736,11 @@ function SkillsSettingsSection() {
             className: "dsh-as-switch",
             checked: pickerEnabled,
             onChange: (event) => togglePicker(event.currentTarget.checked),
-            "aria-label": "\u5728\u5BF9\u8BDD\u8F93\u5165\u6846\u65C1\u663E\u793A \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE"
+            "aria-label": t.toggleLabel
           }),
-          (0, import_react.createElement)("span", null, "\u5728\u5BF9\u8BDD\u8F93\u5165\u6846\u65C1\u663E\u793A \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE")
+          (0, import_react.createElement)("span", null, t.toggleLabel)
         ),
-        (0, import_react.createElement)("span", { className: "dsh-as-sub", style: { margin: 0 } }, "\u5173\u95ED\u540E\u4ECD\u53EF\u5728\u8F93\u5165\u6846\u76F4\u63A5\u8F93\u5165 /\u6280\u80FD\u540D \u8C03\u7528")
+        (0, import_react.createElement)("span", { className: "dsh-as-sub", style: { margin: 0 } }, t.toggleSub)
       )
     ),
     (0, import_react.createElement)(
@@ -624,7 +757,7 @@ function SkillsSettingsSection() {
             onClick: toggleInstalled,
             role: "button",
             "aria-expanded": installedOpen,
-            title: installedOpen ? "\u70B9\u51FB\u6298\u53E0\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868" : "\u70B9\u51FB\u5C55\u5F00\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868"
+            title: installedOpen ? t.collapseInstalled : t.expandInstalled
           },
           (0, import_react.createElement)(
             "div",
@@ -632,8 +765,8 @@ function SkillsSettingsSection() {
             (0, import_react.createElement)(
               "div",
               { className: "dsh-as-row-name" },
-              "\u5DF2\u5B89\u88C5\u6280\u80FD",
-              installed !== null ? (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${installed.length} \u4E2A`) : null
+              t.installed,
+              installed !== null ? (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${installed.length}${t.countSuffix}`) : null
             )
           ),
           (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, installedOpen ? "\u25BE" : "\u25B8")
@@ -641,28 +774,33 @@ function SkillsSettingsSection() {
         installedOpen ? (0, import_react.createElement)(
           "div",
           { className: "dsh-as-skill-list" },
-          (0, import_react.createElement)("p", { className: "dsh-as-sub", style: { marginTop: 0 } }, `\u5B89\u88C5\u76EE\u5F55\uFF1A${installDir ?? "\u2026"}`),
-          installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u6B63\u5728\u8BFB\u53D6\u2026") : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u8FD8\u6CA1\u6709\u5B89\u88C5\u4EFB\u4F55\u6280\u80FD\u3002") : (0, import_react.createElement)(
+          (0, import_react.createElement)("p", { className: "dsh-as-sub", style: { marginTop: 0 } }, `${t.installDirLabel}\uFF1A${installDir ?? "\u2026"}`),
+          installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.loading) : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.noSkills) : (0, import_react.createElement)(
             "div",
             { style: { display: "grid", gap: 8 } },
-            installed.map((skill) => (0, import_react.createElement)(
-              "div",
-              { key: skill.name, className: "dsh-as-row" },
-              (0, import_react.createElement)(
+            installed.map((skill) => {
+              const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription;
+              const usage = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse);
+              return (0, import_react.createElement)(
                 "div",
-                { className: "dsh-as-row-main" },
-                (0, import_react.createElement)("div", { className: "dsh-as-row-name" }, `/${skill.name}`),
-                (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.description || "(\u65E0\u63CF\u8FF0)")
-              ),
-              (0, import_react.createElement)("button", {
-                type: "button",
-                className: "dsh-as-btn2 dsh-as-danger",
-                disabled: busy,
-                onClick: () => void uninstall(skill.name),
-                title: `\u5378\u8F7D ${skill.name}`,
-                "aria-label": `\u5378\u8F7D ${skill.name}`
-              }, (0, import_react.createElement)(IconTrash), "\u5378\u8F7D")
-            ))
+                { key: skill.name, className: "dsh-as-row" },
+                (0, import_react.createElement)(
+                  "div",
+                  { className: "dsh-as-row-main" },
+                  (0, import_react.createElement)("div", { className: "dsh-as-row-name" }, `/${skill.name}`),
+                  (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, desc),
+                  usage !== void 0 && usage !== "" ? (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, `${t.usage}\uFF1A${usage}`) : null
+                ),
+                (0, import_react.createElement)("button", {
+                  type: "button",
+                  className: "dsh-as-btn2 dsh-as-danger",
+                  disabled: busy,
+                  onClick: () => void uninstall(skill.name),
+                  title: `${t.uninstall} ${skill.name}`,
+                  "aria-label": `${t.uninstall} ${skill.name}`
+                }, (0, import_react.createElement)(IconTrash), t.uninstall)
+              );
+            })
           )
         ) : null
       )
@@ -670,10 +808,10 @@ function SkillsSettingsSection() {
     (0, import_react.createElement)(
       "section",
       { className: "dsh-as-card" },
-      (0, import_react.createElement)("h3", null, "\u5BFC\u5165"),
-      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, "\u4ECE Codex / Claude Code / OpenCode \u6216\u672C\u673A\u76EE\u5F55\u590D\u5236\u6280\u80FD\u5230 ~/.dsh/skills\u3002"),
+      (0, import_react.createElement)("h3", null, t.importTitle),
+      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, t.importSub),
       srcCwd !== void 0 ? (0, import_react.createElement)("p", { className: "dsh-as-sub" }, `\u9879\u76EE\u7EA7\u76EE\u5F55\u57FA\u4E8E\u670D\u52A1\u542F\u52A8\u76EE\u5F55\u68C0\u6D4B\uFF1A${srcCwd}`) : null,
-      sources === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, "\u6B63\u5728\u626B\u63CF\u6765\u6E90\u2026") : (0, import_react.createElement)(
+      sources === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.scanningSources) : (0, import_react.createElement)(
         "div",
         { style: { display: "grid", gap: 8 } },
         sources.filter((s) => s.exists || s.skills.length > 0).map((group) => {
@@ -689,7 +827,7 @@ function SkillsSettingsSection() {
                 onClick: () => setExpanded((prev) => ({ ...prev, [group.id]: !open })),
                 role: "button",
                 "aria-expanded": open,
-                title: "\u70B9\u51FB\u5C55\u5F00\u67E5\u770B\u6280\u80FD\u8BE6\u60C5"
+                title: t.dirTip
               },
               (0, import_react.createElement)(
                 "div",
@@ -698,7 +836,7 @@ function SkillsSettingsSection() {
                   "div",
                   { className: "dsh-as-row-name" },
                   group.label,
-                  (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${group.skills.length} \u4E2A\u6280\u80FD`)
+                  (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${group.skills.length}${t.countSuffix}`)
                 ),
                 (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, group.path)
               ),
@@ -710,14 +848,14 @@ function SkillsSettingsSection() {
                   event.stopPropagation();
                   void importTool(group);
                 },
-                title: group.skills.length === 0 ? "\u8BE5\u76EE\u5F55\u4E0B\u6CA1\u6709\u6280\u80FD" : `\u5BFC\u5165 ${group.label} \u7684\u5168\u90E8 ${group.skills.length} \u4E2A\u6280\u80FD`
-              }, (0, import_react.createElement)(IconBolt, { size: 12 }), "\u5BFC\u5165\u5168\u90E8"),
+                title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`
+              }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importAll),
               (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, open ? "\u25BE" : "\u25B8")
             ),
             open ? (0, import_react.createElement)(
               "div",
               { className: "dsh-as-skill-list" },
-              group.skills.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, "\u8BE5\u76EE\u5F55\u4E0B\u6CA1\u6709\u6280\u80FD") : group.skills.map((skill) => (0, import_react.createElement)(
+              group.skills.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, t.groupNoSkills) : group.skills.map((skill) => (0, import_react.createElement)(
                 "div",
                 { key: skill.name, className: "dsh-as-skill-row" },
                 (0, import_react.createElement)(
@@ -727,18 +865,18 @@ function SkillsSettingsSection() {
                     "div",
                     { className: "dsh-as-row-name" },
                     `/${skill.name}`,
-                    skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-installed" }, " \u2713 \u5DF2\u5B89\u88C5") : null
+                    skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-installed" }, ` \u2713 ${t.installedTag}`) : null
                   ),
-                  (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.description || "(\u65E0\u63CF\u8FF0)"),
+                  (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription),
                   (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.path)
                 ),
-                skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-status", style: { flex: "none" } }, "\u5DF2\u5B89\u88C5") : (0, import_react.createElement)("button", {
+                skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-status", style: { flex: "none" } }, t.installedTag) : (0, import_react.createElement)("button", {
                   type: "button",
                   className: "dsh-as-btn2",
                   disabled: busy,
                   onClick: () => void importOne(group, skill),
-                  title: `\u4EC5\u5BFC\u5165 ${skill.name}`
-                }, (0, import_react.createElement)(IconBolt, { size: 12 }), "\u5BFC\u5165")
+                  title: `${t.importOne} ${skill.name}`
+                }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importBtn)
               ))
             ) : null
           );
@@ -751,22 +889,22 @@ function SkillsSettingsSection() {
           className: "dsh-as-input",
           value: localPath,
           onChange: (event) => setLocalPath(event.currentTarget.value),
-          placeholder: "\u672C\u673A\u76EE\u5F55\u8DEF\u5F84\uFF08\u542B SKILL.md \u6216\u6280\u80FD\u6587\u4EF6\uFF09",
-          "aria-label": "\u672C\u673A\u76EE\u5F55\u8DEF\u5F84"
+          placeholder: t.importPlaceholder,
+          "aria-label": t.localDirAria
         }),
         (0, import_react.createElement)("button", {
           type: "button",
           className: "dsh-as-btn2 dsh-as-primary",
           disabled: busy || localPath.trim() === "",
           onClick: () => void importLocal()
-        }, "\u5BFC\u5165")
+        }, t.importBtn)
       )
     ),
     (0, import_react.createElement)(
       "section",
       { className: "dsh-as-card" },
-      (0, import_react.createElement)("h3", null, "\u5B89\u88C5"),
-      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, "\u4ECE GitHub \u6216 npm \u5B89\u88C5\uFF08\u652F\u6301\u6279\u91CF\uFF0C\u7528\u7A7A\u683C/\u9017\u53F7/\u5206\u53F7\u5206\u9694\uFF09\u3002"),
+      (0, import_react.createElement)("h3", null, t.installTitle),
+      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, t.installSub),
       (0, import_react.createElement)(
         "div",
         { className: "dsh-as-toolbar" },
@@ -774,8 +912,8 @@ function SkillsSettingsSection() {
           className: "dsh-as-input",
           value: remoteInput,
           onChange: (event) => setRemoteInput(event.currentTarget.value),
-          placeholder: "owner/repo \u6216 https://github.com/... \u6216 npm \u5305\u540D\uFF0C\u591A\u4E2A\u7528\u7A7A\u683C\u5206\u9694",
-          "aria-label": "GitHub \u4ED3\u5E93\u6216 npm \u5305\u540D"
+          placeholder: t.installPlaceholder,
+          "aria-label": t.installInputAria
         }),
         (0, import_react.createElement)("button", {
           type: "button",
@@ -783,7 +921,7 @@ function SkillsSettingsSection() {
           disabled: busy || remoteInput.trim() === "",
           onClick: () => void installRemote(),
           style: { minWidth: 84 }
-        }, busy ? (0, import_react.createElement)(IconRefresh, { size: 12, spin: true }) : null, busy ? "\u5B89\u88C5\u4E2D\u2026" : "\u5B89\u88C5")
+        }, busy ? (0, import_react.createElement)(IconRefresh, { size: 12, spin: true }) : null, busy ? t.importing : t.installBtn)
       )
     )
   );

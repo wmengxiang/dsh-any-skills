@@ -53,6 +53,38 @@ Body.
   assert.equal(parsed.description, 'Has, commas, and: colons')
 })
 
+test('parseSkillText: parses optional localized description/whenToUse fields', () => {
+  const raw = `---
+name: my-skill
+description: Does a thing.
+description_zh: 做一件事。
+description_en: Does a thing in English.
+whenToUse: When needed.
+whenToUse_zh: 需要的时候用。
+whenToUse_en: When needed (en).
+---
+Body.
+`
+  const parsed = parseSkillText(raw)
+  assert.ok(parsed)
+  assert.equal(parsed.description, 'Does a thing.')
+  assert.equal(parsed.descriptionZh, '做一件事。')
+  assert.equal(parsed.descriptionEn, 'Does a thing in English.')
+  assert.equal(parsed.whenToUse, 'When needed.')
+  assert.equal(parsed.whenToUseZh, '需要的时候用。')
+  assert.equal(parsed.whenToUseEn, 'When needed (en).')
+})
+
+test('parseSkillText: localized fields are absent when not provided', () => {
+  const parsed = parseSkillText('---\nname: plain\ndescription: Only one language.\n---\nBody.\n')
+  assert.ok(parsed)
+  assert.equal(parsed.descriptionZh, undefined)
+  assert.equal(parsed.descriptionEn, undefined)
+  assert.equal(parsed.whenToUse, undefined)
+  assert.equal(parsed.whenToUseZh, undefined)
+  assert.equal(parsed.whenToUseEn, undefined)
+})
+
 test('parseSkillText: rejects missing frontmatter / name / description', () => {
   assert.equal(parseSkillText('# no frontmatter\nbody'), undefined)
   assert.equal(parseSkillText('---\nname: only-name\n---\nbody'), undefined)
