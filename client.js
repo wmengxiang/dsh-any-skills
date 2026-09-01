@@ -113,7 +113,7 @@ var ZH_TEXT = {
   skippedSuffix: "\uFF08{n} \u4E2A\u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF09",
   installedNotice: "\u5DF2\u5B89\u88C5 {n} \u4E2A\u6280\u80FD\uFF08{ok}/{total} \u4E2A\u6765\u6E90\u6210\u529F\uFF09",
   installDoneNotice: "\u5B89\u88C5\u5B8C\u6210",
-  installFailedNotice: "\u5B89\u88C5\u5931\u8D25\uFF1A{n} \u4E2A\u6765\u6E90\uFF08\u8BE6\u89C1\u4E0B\u65B9\u9519\u8BEF\uFF09",
+  installFailedNotice: "\u5B89\u88C5\u5931\u8D25\uFF1A{n} \u4E2A\u6765\u6E90",
   localPathRequired: "\u8BF7\u8F93\u5165\u672C\u673A\u76EE\u5F55\u8DEF\u5F84",
   remoteInputRequired: "\u8BF7\u8F93\u5165 GitHub \u4ED3\u5E93\uFF08owner/repo \u6216 URL\uFF09\u6216 npm \u5305\u540D"
 };
@@ -171,7 +171,7 @@ var EN_TEXT = {
   skippedSuffix: " ({n} already exist, skipped)",
   installedNotice: "Installed {n} skills ({ok}/{total} sources OK)",
   installDoneNotice: "Install finished",
-  installFailedNotice: "Install failed: {n} source(s) (see error below)",
+  installFailedNotice: "Install failed: {n} source(s)",
   localPathRequired: "Enter a local directory path",
   remoteInputRequired: "Enter a GitHub repo (owner/repo or URL) or an npm package name"
 };

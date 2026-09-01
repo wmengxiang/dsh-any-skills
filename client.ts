@@ -198,7 +198,7 @@ const ZH_TEXT: UiText = {
   skippedSuffix: '（{n} 个已存在，跳过）',
   installedNotice: '已安装 {n} 个技能（{ok}/{total} 个来源成功）',
   installDoneNotice: '安装完成',
-  installFailedNotice: '安装失败：{n} 个来源（详见下方错误）',
+  installFailedNotice: '安装失败：{n} 个来源',
   localPathRequired: '请输入本机目录路径',
   remoteInputRequired: '请输入 GitHub 仓库（owner/repo 或 URL）或 npm 包名',
 }
@@ -257,7 +257,7 @@ const EN_TEXT: UiText = {
   skippedSuffix: ' ({n} already exist, skipped)',
   installedNotice: 'Installed {n} skills ({ok}/{total} sources OK)',
   installDoneNotice: 'Install finished',
-  installFailedNotice: 'Install failed: {n} source(s) (see error below)',
+  installFailedNotice: 'Install failed: {n} source(s)',
   localPathRequired: 'Enter a local directory path',
   remoteInputRequired: 'Enter a GitHub repo (owner/repo or URL) or an npm package name',
 }
