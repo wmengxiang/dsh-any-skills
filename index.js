@@ -250,9 +250,31 @@ import { join as join2 } from "node:path";
 import { promisify } from "node:util";
 var execFileAsync = promisify(execFile);
 var GH_API = "https://api.github.com";
+var GH_CLONE = "https://github.com";
 var CODELOAD = "https://codeload.github.com";
 var NPM_REGISTRY = "https://registry.npmjs.org";
 var USER_AGENT = "dsh-any-skills/0.1.0";
+var SPARSE_EXCLUSIONS = [
+  "/assets/",
+  "/docs/",
+  "/docs-site/",
+  "/marketplace/",
+  "/public/",
+  "/static/",
+  "/media/",
+  "/images/",
+  "/img/",
+  "/video/",
+  "/videos/",
+  "/node_modules/",
+  "/dist/",
+  "/build/",
+  "/target/",
+  "/vendor/",
+  "/demo/",
+  "/gifs/",
+  "/screenshots/"
+];
 var REPO_NAME_RE = /^[A-Za-z0-9_.-]+$/;
 function parseRepoInput(input) {
   const raw = String(input ?? "").trim();
@@ -323,6 +345,36 @@ async function inspectRepo(owner, repo, token) {
 }
 var DOWNLOAD_TIMEOUT_MS = 3e5;
 var DOWNLOAD_RETRIES = 2;
+var GIT_TIMEOUT_MS = 3e5;
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+async function gitCloneSparse(owner, repo, ref) {
+  const tmp = await mkdtemp(join2(tmpdir(), "dsh-any-skills-"));
+  const url = `${GH_CLONE}/${owner}/${repo}.git`;
+  try {
+    await execFileAsync("git", ["clone", "--depth", "1", "--filter=blob:none", "--sparse", "--single-branch", "--branch", ref, url, tmp], {
+      stdio: "ignore",
+      timeout: GIT_TIMEOUT_MS
+    });
+    const patterns = ["/*", ...SPARSE_EXCLUSIONS.map((ex) => `!${ex}`)];
+    await execFileAsync("git", ["-C", tmp, "sparse-checkout", "set", "--no-cone", ...patterns], {
+      stdio: "ignore",
+      timeout: GIT_TIMEOUT_MS
+    });
+    await execFileAsync("git", ["-C", tmp, "checkout"], {
+      stdio: "ignore",
+      timeout: GIT_TIMEOUT_MS
+    });
+    return {
+      root: tmp,
+      cleanup: () => rm2(tmp, { recursive: true, force: true })
+    };
+  } catch (error) {
+    await rm2(tmp, { recursive: true, force: true });
+    throw new Error(`\u514B\u9686 ${owner}/${repo} \u5931\u8D25\uFF08\u7F51\u7EDC\u6216\u4ED3\u5E93\u4E0D\u53EF\u7528\uFF09\uFF1A${errorMessage(error)}`);
+  }
+}
 async function downloadTarball(url, label, destination) {
   let lastError;
   for (let attempt = 0; attempt <= DOWNLOAD_RETRIES; attempt++) {
@@ -427,8 +479,24 @@ async function installFromGitHub(input, installDir, token) {
   }
   const meta = await inspectRepo(parsed.owner, parsed.repo, token);
   const branch = parsed.ref ?? meta.defaultBranch;
-  const tarballUrl = `${CODELOAD}/${parsed.owner}/${parsed.repo}/tar.gz/${encodeURIComponent(branch)}`;
-  const { root, cleanup } = await downloadAndExtract(tarballUrl, `${parsed.owner}/${parsed.repo}`);
+  let root;
+  let cleanup;
+  let cloneError = void 0;
+  try {
+    const cloned = await gitCloneSparse(parsed.owner, parsed.repo, branch);
+    root = cloned.root;
+    cleanup = cloned.cleanup;
+  } catch (error) {
+    cloneError = error;
+    try {
+      const tarballUrl = `${CODELOAD}/${parsed.owner}/${parsed.repo}/tar.gz/${encodeURIComponent(branch)}`;
+      const downloaded = await downloadAndExtract(tarballUrl, `${parsed.owner}/${parsed.repo}`);
+      root = downloaded.root;
+      cleanup = downloaded.cleanup;
+    } catch (tarballError) {
+      throw new Error(`\u514B\u9686 ${parsed.owner}/${parsed.repo} \u5931\u8D25\uFF1A${errorMessage(cloneError)}\uFF1Btarball \u56DE\u9000\u4E5F\u5931\u8D25\uFF1A${errorMessage(tarballError)}`);
+    }
+  }
   try {
     const installed = await installSkillsFromTree(root, installDir, normalizeSkillName(parsed.repo));
     if (installed.length === 0) {
@@ -590,7 +658,7 @@ async function handleApi(req, res, installDir, token) {
     }
     sendJson(res, 404, { ok: false, message: "not found" });
   } catch (error) {
-    sendJson(res, 500, { ok: false, message: errorMessage(error) });
+    sendJson(res, 500, { ok: false, message: errorMessage2(error) });
   }
 }
 async function importSkills(body, installDir, token) {
@@ -671,7 +739,7 @@ async function installRemote(body, installDir, token) {
         results.push({ source: value || String(record.type ?? ""), ok: false, message: `\u672A\u77E5\u7684\u5B89\u88C5\u7C7B\u578B: ${type}` });
       }
     } catch (error) {
-      results.push({ source: value || String(record.type ?? ""), ok: false, message: errorMessage(error) });
+      results.push({ source: value || String(record.type ?? ""), ok: false, message: errorMessage2(error) });
     }
   }
   return { ok: true, results };
@@ -710,15 +778,17 @@ function sendJson(res, status, body) {
   });
   res.end(data);
 }
-function errorMessage(error) {
+function errorMessage2(error) {
   return error instanceof Error ? error.message : String(error);
 }
 export {
   DOWNLOAD_RETRIES,
   DOWNLOAD_TIMEOUT_MS,
+  SPARSE_EXCLUSIONS,
   apply,
   detectSources,
   downloadTarball,
+  gitCloneSparse,
   inject,
   installAllFromRoot,
   installFromGitHub,

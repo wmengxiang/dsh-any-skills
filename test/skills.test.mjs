@@ -20,6 +20,7 @@ import {
   detectSources,
   installSkillsFromTree,
   downloadTarball,
+  SPARSE_EXCLUSIONS,
 } from '../index.js'
 
 /* ---------------- parseSkillText ---------------- */
@@ -286,6 +287,15 @@ test('downloadTarball: reports a friendly message after repeated timeouts', asyn
   } finally {
     globalThis.fetch = originalFetch
     await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('SPARSE_EXCLUSIONS: excludes heavy dirs but never skill locations', () => {
+  for (const heavy of ['/assets/', '/docs/', '/node_modules/', '/dist/', '/build/', '/public/']) {
+    assert.ok(SPARSE_EXCLUSIONS.includes(heavy), `must exclude ${heavy}`)
+  }
+  for (const skillPath of ['/skills/', '/.claude/skills/', '/.agents/skills/', '/.codex/skills/']) {
+    assert.ok(!SPARSE_EXCLUSIONS.includes(skillPath), `must NOT exclude ${skillPath}`)
   }
 })
 

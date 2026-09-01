@@ -2,9 +2,9 @@
  * dsh-any-skills — remote install from GitHub and npm.
  *
  * GitHub: accepts `owner/repo`, HTTPS URL, SSH URL (`git@github.com:o/r.git`)
- * and `ssh://` forms; resolves to the codeload tarball, extracts it and
- * copies every skill it contains into the install dir (mirrors the
- * dsh-skill-market approach: tarball download + extract, no git binary).
+ * and `ssh://` forms; sparse-clones the repo (blob:none + sparse-checkout，
+ * 只拉技能相关文件，避开大型演示资产——大仓库如 Trellis 57MB 用 tarball
+ * 下载极易超时），git 不可用时回退到 codeload tarball 下载。
  *
  * npm: resolves the package tarball through the registry API
  * (registry.npmjs.org), extracts it and copies contained skills.
@@ -22,9 +22,18 @@ import { normalizeSkillName, installBundleDir, installFlatFile, readSkillDoc, Sk
 const execFileAsync = promisify(execFile)
 
 const GH_API = 'https://api.github.com'
+const GH_CLONE = 'https://github.com'
 const CODELOAD = 'https://codeload.github.com'
 const NPM_REGISTRY = 'https://registry.npmjs.org'
 const USER_AGENT = 'dsh-any-skills/0.1.0'
+
+/** 稀疏克隆时排除的重型目录（演示资源/构建产物/文档站等，与技能无关）。 */
+export const SPARSE_EXCLUSIONS = [
+  '/assets/', '/docs/', '/docs-site/', '/marketplace/',
+  '/public/', '/static/', '/media/', '/images/', '/img/',
+  '/video/', '/videos/', '/node_modules/', '/dist/', '/build/',
+  '/target/', '/vendor/', '/demo/', '/gifs/', '/screenshots/',
+]
 
 export interface RepoRef {
   owner: string
@@ -128,6 +137,45 @@ export const DOWNLOAD_TIMEOUT_MS = 300000
 
 /** 网络抖动时自动重试的次数。 */
 export const DOWNLOAD_RETRIES = 2
+
+/** git 克隆/检出单步超时（ms）。 */
+export const GIT_TIMEOUT_MS = 300000
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/**
+ * 稀疏克隆 GitHub 仓库到临时目录：`--filter=blob:none --sparse` +
+ * 排除重型目录（assets/docs/构建产物等），只物化与技能相关的文件，
+ * 避免大仓库整包下载超时。返回克隆根目录与清理函数。
+ */
+export async function gitCloneSparse(owner: string, repo: string, ref: string): Promise<{ root: string; cleanup: () => Promise<void> }> {
+  const tmp = await mkdtemp(join(tmpdir(), 'dsh-any-skills-'))
+  const url = `${GH_CLONE}/${owner}/${repo}.git`
+  try {
+    await execFileAsync('git', ['clone', '--depth', '1', '--filter=blob:none', '--sparse', '--single-branch', '--branch', ref, url, tmp], {
+      stdio: 'ignore',
+      timeout: GIT_TIMEOUT_MS,
+    } as Parameters<typeof execFileAsync>[2])
+    const patterns = ['/*', ...SPARSE_EXCLUSIONS.map((ex) => `!${ex}`)]
+    await execFileAsync('git', ['-C', tmp, 'sparse-checkout', 'set', '--no-cone', ...patterns], {
+      stdio: 'ignore',
+      timeout: GIT_TIMEOUT_MS,
+    } as Parameters<typeof execFileAsync>[2])
+    await execFileAsync('git', ['-C', tmp, 'checkout'], {
+      stdio: 'ignore',
+      timeout: GIT_TIMEOUT_MS,
+    } as Parameters<typeof execFileAsync>[2])
+    return {
+      root: tmp,
+      cleanup: () => rm(tmp, { recursive: true, force: true }),
+    }
+  } catch (error) {
+    await rm(tmp, { recursive: true, force: true })
+    throw new Error(`克隆 ${owner}/${repo} 失败（网络或仓库不可用）：${errorMessage(error)}`)
+  }
+}
 
 /**
  * 下载 tarball 到 destination。网络失败自动重试；最终超时抛友好错误
@@ -260,8 +308,26 @@ export async function installFromGitHub(input: string, installDir: string, token
   }
   const meta = await inspectRepo(parsed.owner, parsed.repo, token)
   const branch = parsed.ref ?? meta.defaultBranch
-  const tarballUrl = `${CODELOAD}/${parsed.owner}/${parsed.repo}/tar.gz/${encodeURIComponent(branch)}`
-  const { root, cleanup } = await downloadAndExtract(tarballUrl, `${parsed.owner}/${parsed.repo}`)
+  // 主路径：稀疏 git 克隆（只拉技能相关文件，大仓库也能秒级完成）
+  // 回退：git 不可用/克隆失败时走 codeload tarball 下载（带重试与超时提示）
+  let root: string
+  let cleanup: () => Promise<void>
+  let cloneError: unknown = undefined
+  try {
+    const cloned = await gitCloneSparse(parsed.owner, parsed.repo, branch)
+    root = cloned.root
+    cleanup = cloned.cleanup
+  } catch (error) {
+    cloneError = error
+    try {
+      const tarballUrl = `${CODELOAD}/${parsed.owner}/${parsed.repo}/tar.gz/${encodeURIComponent(branch)}`
+      const downloaded = await downloadAndExtract(tarballUrl, `${parsed.owner}/${parsed.repo}`)
+      root = downloaded.root
+      cleanup = downloaded.cleanup
+    } catch (tarballError) {
+      throw new Error(`克隆 ${parsed.owner}/${parsed.repo} 失败：${errorMessage(cloneError)}；tarball 回退也失败：${errorMessage(tarballError)}`)
+    }
+  }
   try {
     const installed = await installSkillsFromTree(root, installDir, normalizeSkillName(parsed.repo))
     if (installed.length === 0) {
