@@ -64,6 +64,27 @@ export function pickLocalized<T>(locale: Locale, zh: T | undefined, en: T | unde
   return en ?? fallback
 }
 
+interface FilterableSkill {
+  name: string
+  description?: string
+  descriptionZh?: string
+  descriptionEn?: string
+}
+
+/**
+ * 按技能名 + 说明（含中英文）模糊过滤，大小写不敏感；空查询返回原列表。
+ */
+export function filterSkills<T extends FilterableSkill>(skills: T[], query: string): T[] {
+  const q = query.trim().toLowerCase()
+  if (q === '') return skills
+  return skills.filter((s) =>
+    s.name.toLowerCase().includes(q)
+    || String(s.description ?? '').toLowerCase().includes(q)
+    || String(s.descriptionZh ?? '').toLowerCase().includes(q)
+    || String(s.descriptionEn ?? '').toLowerCase().includes(q),
+  )
+}
+
 interface UiText {
   usage: string
   installed: string
@@ -83,6 +104,9 @@ interface UiText {
   loadFailed: string
   expandInstalled: string
   collapseInstalled: string
+  expandImport: string
+  collapseImport: string
+  srcCwdLabel: string
   pageTitle: string
   pageSub: string
   toggleLabel: string
@@ -138,6 +162,9 @@ const ZH_TEXT: UiText = {
   loadFailed: '加载失败',
   expandInstalled: '点击展开已安装技能列表',
   collapseInstalled: '点击折叠已安装技能列表',
+  expandImport: '点击展开「导入」区域',
+  collapseImport: '点击折叠「导入」区域',
+  srcCwdLabel: '项目级目录基于服务启动目录检测：',
   pageTitle: 'Skill 管理',
   pageSub: '技能存放于 ~/.dsh/skills，模型可自动读取；在对话框旁点击 ⚡ 按钮可插入 /技能名 调用。',
   toggleLabel: '在对话输入框旁显示 ⚡ 技能选择按钮',
@@ -193,6 +220,9 @@ const EN_TEXT: UiText = {
   loadFailed: 'Failed to load',
   expandInstalled: 'Click to expand the installed skills list',
   collapseInstalled: 'Click to collapse the installed skills list',
+  expandImport: 'Click to expand the import area',
+  collapseImport: 'Click to collapse the import area',
+  srcCwdLabel: 'Project directories are detected from the server start directory: ',
   pageTitle: 'Skill Manager',
   pageSub: 'Skills live in ~/.dsh/skills and are read automatically by the model; click the ⚡ button beside the input to insert /skill-name.',
   toggleLabel: 'Show the ⚡ skill picker beside the input',
@@ -421,6 +451,27 @@ export function loadInstalledOpen(): boolean {
 export function saveInstalledOpen(open: boolean): void {
   try {
     localStorage.setItem(INSTALLED_OPEN_KEY, open ? '1' : '0')
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+/* ---------------- import-section collapse preference ---------------- */
+/* 设置页「导入」区域可折叠，状态持久化到 localStorage（默认展开）。 */
+
+const IMPORT_OPEN_KEY = 'dsh-any-skills:import-open'
+
+export function loadImportOpen(): boolean {
+  try {
+    return localStorage.getItem(IMPORT_OPEN_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+export function saveImportOpen(open: boolean): void {
+  try {
+    localStorage.setItem(IMPORT_OPEN_KEY, open ? '1' : '0')
   } catch {
     /* storage unavailable */
   }
@@ -757,13 +808,24 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const [lastUninstall, setLastUninstall] = useState<UninstallInfo | null>(null)
   const [pickerEnabled, setPickerEnabledState] = useState<boolean>(() => isPickerEnabled())
   const [installedOpen, setInstalledOpen] = useState<boolean>(() => loadInstalledOpen())
+  const [importOpen, setImportOpen] = useState<boolean>(() => loadImportOpen())
+  const [installedQuery, setInstalledQuery] = useState('')
   const locale = currentLocale()
   const t = uiText(locale)
+  const filteredInstalled = installed === null ? [] : filterSkills(installed, installedQuery)
 
   const toggleInstalled = () => {
     setInstalledOpen((open) => {
       const next = !open
       saveInstalledOpen(next)
+      return next
+    })
+  }
+
+  const toggleImport = () => {
+    setImportOpen((open) => {
+      const next = !open
+      saveImportOpen(next)
       return next
     })
   }
@@ -951,12 +1013,24 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
         installedOpen
           ? h('div', { className: 'dsh-as-skill-list' },
             h('p', { className: 'dsh-as-sub', style: { marginTop: 0 } }, `${t.installDirLabel}：${installDir ?? '…'}`),
+            installed !== null && installed.length > 0
+              ? h('input', {
+                className: 'dsh-as-input',
+                style: { width: '100%', boxSizing: 'border-box' },
+                value: installedQuery,
+                onChange: (event: { currentTarget: { value: string } }) => setInstalledQuery(event.currentTarget.value),
+                placeholder: t.searchPlaceholder,
+                'aria-label': t.searchPlaceholder,
+              })
+              : null,
             installed === null
               ? h('p', { className: 'dsh-as-status' }, t.loading)
               : installed.length === 0
                 ? h('p', { className: 'dsh-as-status' }, t.noSkills)
-                : h('div', { style: { display: 'grid', gap: 8 } },
-                  installed.map((skill) => {
+                : filteredInstalled.length === 0
+                  ? h('p', { className: 'dsh-as-status' }, t.noMatch)
+                  : h('div', { style: { display: 'grid', gap: 8 } },
+                  filteredInstalled.map((skill) => {
                     const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription
                     const usage = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse)
                     return h('div', { key: skill.name, className: 'dsh-as-row' },
@@ -984,11 +1058,26 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     ),
 
     h('section', { className: 'dsh-as-card' },
-      h('h3', null, t.importTitle),
-      h('p', { className: 'dsh-as-sub' }, t.importSub),
-      srcCwd !== undefined
-        ? h('p', { className: 'dsh-as-sub' }, `项目级目录基于服务启动目录检测：${srcCwd}`)
-        : null,
+      h('div', { className: 'dsh-as-card-row' + (importOpen ? ' dsh-as-row-open' : '') },
+        h('div', {
+          className: 'dsh-as-row',
+          style: { cursor: 'pointer' },
+          onClick: toggleImport,
+          role: 'button',
+          'aria-expanded': importOpen,
+          title: importOpen ? t.collapseImport : t.expandImport,
+        },
+          h('div', { className: 'dsh-as-row-main' },
+            h('div', { className: 'dsh-as-row-name' }, t.importTitle),
+          ),
+          h('span', { className: 'dsh-as-caret', 'aria-hidden': true }, importOpen ? '▾' : '▸'),
+        ),
+        importOpen
+          ? h('div', { className: 'dsh-as-skill-list' },
+            h('p', { className: 'dsh-as-sub', style: { marginTop: 0 } }, t.importSub),
+            srcCwd !== undefined
+              ? h('p', { className: 'dsh-as-sub' }, `${t.srcCwdLabel}${srcCwd}`)
+              : null,
       sources === null
         ? h('p', { className: 'dsh-as-status' }, t.scanningSources)
         : h('div', { style: { display: 'grid', gap: 8 } },
@@ -1049,20 +1138,23 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
                 : null,
             )
           })),
-      h('div', { className: 'dsh-as-toolbar' },
-        h('input', {
-          className: 'dsh-as-input',
-          value: localPath,
-          onChange: (event: { currentTarget: { value: string } }) => setLocalPath(event.currentTarget.value),
-          placeholder: t.importPlaceholder,
-          'aria-label': t.localDirAria,
-        }),
-        h('button', {
-          type: 'button',
-          className: 'dsh-as-btn2 dsh-as-primary',
-          disabled: busy || localPath.trim() === '',
-          onClick: () => void importLocal(),
-        }, t.importBtn),
+            h('div', { className: 'dsh-as-toolbar' },
+              h('input', {
+                className: 'dsh-as-input',
+                value: localPath,
+                onChange: (event: { currentTarget: { value: string } }) => setLocalPath(event.currentTarget.value),
+                placeholder: t.importPlaceholder,
+                'aria-label': t.localDirAria,
+              }),
+              h('button', {
+                type: 'button',
+                className: 'dsh-as-btn2 dsh-as-primary',
+                disabled: busy || localPath.trim() === '',
+                onClick: () => void importLocal(),
+              }, t.importBtn),
+            ),
+          )
+          : null,
       ),
     ),
 

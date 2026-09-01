@@ -24,9 +24,12 @@ __export(client_exports, {
   apply: () => apply,
   buildInsertedDraft: () => buildInsertedDraft,
   currentLocale: () => currentLocale,
+  filterSkills: () => filterSkills,
   inject: () => inject,
+  loadImportOpen: () => loadImportOpen,
   loadInstalledOpen: () => loadInstalledOpen,
   pickLocalized: () => pickLocalized,
+  saveImportOpen: () => saveImportOpen,
   saveInstalledOpen: () => saveInstalledOpen,
   uiText: () => uiText
 });
@@ -48,6 +51,13 @@ function pickLocalized(locale, zh, en, fallback) {
   if (locale === "zh") return zh ?? fallback;
   return en ?? fallback;
 }
+function filterSkills(skills, query) {
+  const q = query.trim().toLowerCase();
+  if (q === "") return skills;
+  return skills.filter(
+    (s) => s.name.toLowerCase().includes(q) || String(s.description ?? "").toLowerCase().includes(q) || String(s.descriptionZh ?? "").toLowerCase().includes(q) || String(s.descriptionEn ?? "").toLowerCase().includes(q)
+  );
+}
 var ZH_TEXT = {
   usage: "\u7528\u6CD5",
   installed: "\u5DF2\u5B89\u88C5\u6280\u80FD",
@@ -67,6 +77,9 @@ var ZH_TEXT = {
   loadFailed: "\u52A0\u8F7D\u5931\u8D25",
   expandInstalled: "\u70B9\u51FB\u5C55\u5F00\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868",
   collapseInstalled: "\u70B9\u51FB\u6298\u53E0\u5DF2\u5B89\u88C5\u6280\u80FD\u5217\u8868",
+  expandImport: "\u70B9\u51FB\u5C55\u5F00\u300C\u5BFC\u5165\u300D\u533A\u57DF",
+  collapseImport: "\u70B9\u51FB\u6298\u53E0\u300C\u5BFC\u5165\u300D\u533A\u57DF",
+  srcCwdLabel: "\u9879\u76EE\u7EA7\u76EE\u5F55\u57FA\u4E8E\u670D\u52A1\u542F\u52A8\u76EE\u5F55\u68C0\u6D4B\uFF1A",
   pageTitle: "Skill \u7BA1\u7406",
   pageSub: "\u6280\u80FD\u5B58\u653E\u4E8E ~/.dsh/skills\uFF0C\u6A21\u578B\u53EF\u81EA\u52A8\u8BFB\u53D6\uFF1B\u5728\u5BF9\u8BDD\u6846\u65C1\u70B9\u51FB \u26A1 \u6309\u94AE\u53EF\u63D2\u5165 /\u6280\u80FD\u540D \u8C03\u7528\u3002",
   toggleLabel: "\u5728\u5BF9\u8BDD\u8F93\u5165\u6846\u65C1\u663E\u793A \u26A1 \u6280\u80FD\u9009\u62E9\u6309\u94AE",
@@ -121,6 +134,9 @@ var EN_TEXT = {
   loadFailed: "Failed to load",
   expandInstalled: "Click to expand the installed skills list",
   collapseInstalled: "Click to collapse the installed skills list",
+  expandImport: "Click to expand the import area",
+  collapseImport: "Click to collapse the import area",
+  srcCwdLabel: "Project directories are detected from the server start directory: ",
   pageTitle: "Skill Manager",
   pageSub: "Skills live in ~/.dsh/skills and are read automatically by the model; click the \u26A1 button beside the input to insert /skill-name.",
   toggleLabel: "Show the \u26A1 skill picker beside the input",
@@ -314,6 +330,20 @@ function loadInstalledOpen() {
 function saveInstalledOpen(open) {
   try {
     localStorage.setItem(INSTALLED_OPEN_KEY, open ? "1" : "0");
+  } catch {
+  }
+}
+var IMPORT_OPEN_KEY = "dsh-any-skills:import-open";
+function loadImportOpen() {
+  try {
+    return localStorage.getItem(IMPORT_OPEN_KEY) !== "0";
+  } catch {
+    return true;
+  }
+}
+function saveImportOpen(open) {
+  try {
+    localStorage.setItem(IMPORT_OPEN_KEY, open ? "1" : "0");
   } catch {
   }
 }
@@ -566,12 +596,22 @@ function SkillsSettingsSection() {
   const [lastUninstall, setLastUninstall] = (0, import_react.useState)(null);
   const [pickerEnabled, setPickerEnabledState] = (0, import_react.useState)(() => isPickerEnabled());
   const [installedOpen, setInstalledOpen] = (0, import_react.useState)(() => loadInstalledOpen());
+  const [importOpen, setImportOpen] = (0, import_react.useState)(() => loadImportOpen());
+  const [installedQuery, setInstalledQuery] = (0, import_react.useState)("");
   const locale = currentLocale();
   const t = uiText(locale);
+  const filteredInstalled = installed === null ? [] : filterSkills(installed, installedQuery);
   const toggleInstalled = () => {
     setInstalledOpen((open) => {
       const next = !open;
       saveInstalledOpen(next);
+      return next;
+    });
+  };
+  const toggleImport = () => {
+    setImportOpen((open) => {
+      const next = !open;
+      saveImportOpen(next);
       return next;
     });
   };
@@ -775,10 +815,18 @@ function SkillsSettingsSection() {
           "div",
           { className: "dsh-as-skill-list" },
           (0, import_react.createElement)("p", { className: "dsh-as-sub", style: { marginTop: 0 } }, `${t.installDirLabel}\uFF1A${installDir ?? "\u2026"}`),
-          installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.loading) : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.noSkills) : (0, import_react.createElement)(
+          installed !== null && installed.length > 0 ? (0, import_react.createElement)("input", {
+            className: "dsh-as-input",
+            style: { width: "100%", boxSizing: "border-box" },
+            value: installedQuery,
+            onChange: (event) => setInstalledQuery(event.currentTarget.value),
+            placeholder: t.searchPlaceholder,
+            "aria-label": t.searchPlaceholder
+          }) : null,
+          installed === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.loading) : installed.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.noSkills) : filteredInstalled.length === 0 ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.noMatch) : (0, import_react.createElement)(
             "div",
             { style: { display: "grid", gap: 8 } },
-            installed.map((skill) => {
+            filteredInstalled.map((skill) => {
               const desc = pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription;
               const usage = pickLocalized(locale, skill.whenToUseZh, skill.whenToUseEn, skill.whenToUse);
               return (0, import_react.createElement)(
@@ -808,96 +856,120 @@ function SkillsSettingsSection() {
     (0, import_react.createElement)(
       "section",
       { className: "dsh-as-card" },
-      (0, import_react.createElement)("h3", null, t.importTitle),
-      (0, import_react.createElement)("p", { className: "dsh-as-sub" }, t.importSub),
-      srcCwd !== void 0 ? (0, import_react.createElement)("p", { className: "dsh-as-sub" }, `\u9879\u76EE\u7EA7\u76EE\u5F55\u57FA\u4E8E\u670D\u52A1\u542F\u52A8\u76EE\u5F55\u68C0\u6D4B\uFF1A${srcCwd}`) : null,
-      sources === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.scanningSources) : (0, import_react.createElement)(
-        "div",
-        { style: { display: "grid", gap: 8 } },
-        sources.filter((s) => s.exists || s.skills.length > 0).map((group) => {
-          const open = expanded[group.id] === true;
-          return (0, import_react.createElement)(
-            "div",
-            { key: group.id, className: "dsh-as-card-row" + (open ? " dsh-as-row-open" : "") },
-            (0, import_react.createElement)(
-              "div",
-              {
-                className: "dsh-as-row",
-                style: { cursor: "pointer" },
-                onClick: () => setExpanded((prev) => ({ ...prev, [group.id]: !open })),
-                role: "button",
-                "aria-expanded": open,
-                title: t.dirTip
-              },
-              (0, import_react.createElement)(
-                "div",
-                { className: "dsh-as-row-main" },
-                (0, import_react.createElement)(
-                  "div",
-                  { className: "dsh-as-row-name" },
-                  group.label,
-                  (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${group.skills.length}${t.countSuffix}`)
-                ),
-                (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, group.path)
-              ),
-              (0, import_react.createElement)("button", {
-                type: "button",
-                className: "dsh-as-btn2 dsh-as-primary",
-                disabled: busy || group.skills.length === 0,
-                onClick: (event) => {
-                  event.stopPropagation();
-                  void importTool(group);
-                },
-                title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`
-              }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importAll),
-              (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, open ? "\u25BE" : "\u25B8")
-            ),
-            open ? (0, import_react.createElement)(
-              "div",
-              { className: "dsh-as-skill-list" },
-              group.skills.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, t.groupNoSkills) : group.skills.map((skill) => (0, import_react.createElement)(
-                "div",
-                { key: skill.name, className: "dsh-as-skill-row" },
-                (0, import_react.createElement)(
-                  "div",
-                  { className: "dsh-as-row-main" },
-                  (0, import_react.createElement)(
-                    "div",
-                    { className: "dsh-as-row-name" },
-                    `/${skill.name}`,
-                    skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-installed" }, ` \u2713 ${t.installedTag}`) : null
-                  ),
-                  (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription),
-                  (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.path)
-                ),
-                skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-status", style: { flex: "none" } }, t.installedTag) : (0, import_react.createElement)("button", {
-                  type: "button",
-                  className: "dsh-as-btn2",
-                  disabled: busy,
-                  onClick: () => void importOne(group, skill),
-                  title: `${t.importOne} ${skill.name}`
-                }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importBtn)
-              ))
-            ) : null
-          );
-        })
-      ),
       (0, import_react.createElement)(
         "div",
-        { className: "dsh-as-toolbar" },
-        (0, import_react.createElement)("input", {
-          className: "dsh-as-input",
-          value: localPath,
-          onChange: (event) => setLocalPath(event.currentTarget.value),
-          placeholder: t.importPlaceholder,
-          "aria-label": t.localDirAria
-        }),
-        (0, import_react.createElement)("button", {
-          type: "button",
-          className: "dsh-as-btn2 dsh-as-primary",
-          disabled: busy || localPath.trim() === "",
-          onClick: () => void importLocal()
-        }, t.importBtn)
+        { className: "dsh-as-card-row" + (importOpen ? " dsh-as-row-open" : "") },
+        (0, import_react.createElement)(
+          "div",
+          {
+            className: "dsh-as-row",
+            style: { cursor: "pointer" },
+            onClick: toggleImport,
+            role: "button",
+            "aria-expanded": importOpen,
+            title: importOpen ? t.collapseImport : t.expandImport
+          },
+          (0, import_react.createElement)(
+            "div",
+            { className: "dsh-as-row-main" },
+            (0, import_react.createElement)("div", { className: "dsh-as-row-name" }, t.importTitle)
+          ),
+          (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, importOpen ? "\u25BE" : "\u25B8")
+        ),
+        importOpen ? (0, import_react.createElement)(
+          "div",
+          { className: "dsh-as-skill-list" },
+          (0, import_react.createElement)("p", { className: "dsh-as-sub", style: { marginTop: 0 } }, t.importSub),
+          srcCwd !== void 0 ? (0, import_react.createElement)("p", { className: "dsh-as-sub" }, `${t.srcCwdLabel}${srcCwd}`) : null,
+          sources === null ? (0, import_react.createElement)("p", { className: "dsh-as-status" }, t.scanningSources) : (0, import_react.createElement)(
+            "div",
+            { style: { display: "grid", gap: 8 } },
+            sources.filter((s) => s.exists || s.skills.length > 0).map((group) => {
+              const open = expanded[group.id] === true;
+              return (0, import_react.createElement)(
+                "div",
+                { key: group.id, className: "dsh-as-card-row" + (open ? " dsh-as-row-open" : "") },
+                (0, import_react.createElement)(
+                  "div",
+                  {
+                    className: "dsh-as-row",
+                    style: { cursor: "pointer" },
+                    onClick: () => setExpanded((prev) => ({ ...prev, [group.id]: !open })),
+                    role: "button",
+                    "aria-expanded": open,
+                    title: t.dirTip
+                  },
+                  (0, import_react.createElement)(
+                    "div",
+                    { className: "dsh-as-row-main" },
+                    (0, import_react.createElement)(
+                      "div",
+                      { className: "dsh-as-row-name" },
+                      group.label,
+                      (0, import_react.createElement)("span", { className: "dsh-as-count" }, `${group.skills.length}${t.countSuffix}`)
+                    ),
+                    (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, group.path)
+                  ),
+                  (0, import_react.createElement)("button", {
+                    type: "button",
+                    className: "dsh-as-btn2 dsh-as-primary",
+                    disabled: busy || group.skills.length === 0,
+                    onClick: (event) => {
+                      event.stopPropagation();
+                      void importTool(group);
+                    },
+                    title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`
+                  }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importAll),
+                  (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, open ? "\u25BE" : "\u25B8")
+                ),
+                open ? (0, import_react.createElement)(
+                  "div",
+                  { className: "dsh-as-skill-list" },
+                  group.skills.length === 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, t.groupNoSkills) : group.skills.map((skill) => (0, import_react.createElement)(
+                    "div",
+                    { key: skill.name, className: "dsh-as-skill-row" },
+                    (0, import_react.createElement)(
+                      "div",
+                      { className: "dsh-as-row-main" },
+                      (0, import_react.createElement)(
+                        "div",
+                        { className: "dsh-as-row-name" },
+                        `/${skill.name}`,
+                        skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-installed" }, ` \u2713 ${t.installedTag}`) : null
+                      ),
+                      (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, pickLocalized(locale, skill.descriptionZh, skill.descriptionEn, skill.description) || t.noDescription),
+                      (0, import_react.createElement)("div", { className: "dsh-as-row-desc" }, skill.path)
+                    ),
+                    skill.installed === true ? (0, import_react.createElement)("span", { className: "dsh-as-status", style: { flex: "none" } }, t.installedTag) : (0, import_react.createElement)("button", {
+                      type: "button",
+                      className: "dsh-as-btn2",
+                      disabled: busy,
+                      onClick: () => void importOne(group, skill),
+                      title: `${t.importOne} ${skill.name}`
+                    }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importBtn)
+                  ))
+                ) : null
+              );
+            })
+          ),
+          (0, import_react.createElement)(
+            "div",
+            { className: "dsh-as-toolbar" },
+            (0, import_react.createElement)("input", {
+              className: "dsh-as-input",
+              value: localPath,
+              onChange: (event) => setLocalPath(event.currentTarget.value),
+              placeholder: t.importPlaceholder,
+              "aria-label": t.localDirAria
+            }),
+            (0, import_react.createElement)("button", {
+              type: "button",
+              className: "dsh-as-btn2 dsh-as-primary",
+              disabled: busy || localPath.trim() === "",
+              onClick: () => void importLocal()
+            }, t.importBtn)
+          )
+        ) : null
       )
     ),
     (0, import_react.createElement)(

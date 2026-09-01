@@ -200,7 +200,52 @@ function findBy(node, predicate) {
   return findBy(node.children, predicate)
 }
 
-test('client bundle: settings section renders the installed-list collapse header', () => {
+/** 收集 vdom 树中所有满足条件的节点。 */
+function findAll(node, predicate, out = []) {
+  if (node === null || node === undefined) return out
+  if (Array.isArray(node)) {
+    for (const child of node) findAll(child, predicate, out)
+    return out
+  }
+  if (typeof node !== 'object') return out
+  if (predicate(node)) out.push(node)
+  findAll(node.children, predicate, out)
+  return out
+}
+
+test('client bundle: import-open preference helpers persist collapse state', () => {
+  const calls = []
+  const ls = {
+    getItem: (k) => (k === 'dsh-any-skills:import-open' ? '0' : null),
+    setItem: (k, v) => calls.push([k, v]),
+  }
+  const { loadImportOpen, saveImportOpen } = loadClientBundle({ localStorage: ls })
+  assert.equal(loadImportOpen(), false, "'0' means collapsed")
+  saveImportOpen(true)
+  assert.deepEqual(calls[0], ['dsh-any-skills:import-open', '1'])
+  saveImportOpen(false)
+  assert.deepEqual(calls[1], ['dsh-any-skills:import-open', '0'])
+
+  const { loadImportOpen: loadDefault } = loadClientBundle({ localStorage: { getItem: () => null } })
+  assert.equal(loadDefault(), true, 'no stored value means expanded by default')
+})
+
+test('client bundle: filterSkills filters installed skills by name and description', () => {
+  const { filterSkills } = loadClientBundle()
+  const skills = [
+    { name: 'docx', description: 'Word documents', descriptionZh: 'Word 文档' },
+    { name: 'pdf', description: 'PDF handling', descriptionZh: 'PDF 处理' },
+    { name: 'pdf-tools', description: 'PDF 高级工具', descriptionZh: 'PDF 高级工具' },
+  ]
+  assert.equal(filterSkills(skills, '').length, 3, 'empty query keeps all')
+  assert.deepEqual(filterSkills(skills, 'doc').map((s) => s.name), ['docx'])
+  assert.deepEqual(filterSkills(skills, 'PDF').map((s) => s.name), ['pdf', 'pdf-tools'], 'matches description (case-insensitive)')
+  assert.deepEqual(filterSkills(skills, '处理').map((s) => s.name), ['pdf'], 'matches zh description')
+  assert.deepEqual(filterSkills(skills, 'nope'), [], 'no match → empty')
+  assert.deepEqual(filterSkills(skills, '  pdf  ').map((s) => s.name), ['pdf', 'pdf-tools'], 'trims whitespace')
+})
+
+test('client bundle: settings section renders installed + import collapse headers', () => {
   const { apply } = loadClientBundle({ localStorage: { getItem: () => '1', setItem: () => undefined } })
   const registrations = []
   const ctx = {
@@ -220,10 +265,12 @@ test('client bundle: settings section renders the installed-list collapse header
   apply(ctx)
   const settings = registrations.find((r) => r.key === 'settings.section').callback()
   const tree = settings.component({})
-  const header = findBy(tree, (n) => n && typeof n === 'object' && n.props !== null && n.props['aria-expanded'] !== undefined)
-  assert.ok(header !== null, 'collapse header with aria-expanded is rendered')
-  assert.equal(header.props.role, 'button')
-  assert.equal(header.props['aria-expanded'], true, 'expanded by stored preference')
+  const headers = findAll(tree, (n) => n && typeof n === 'object' && n.props !== null && n.props['aria-expanded'] !== undefined)
+  assert.ok(headers.length >= 2, `expected >=2 collapse headers, got ${headers.length}`)
+  for (const header of headers) {
+    assert.equal(header.props.role, 'button')
+    assert.equal(header.props['aria-expanded'], true, 'expanded by stored preference')
+  }
 })
 
 test('client bundle: pickLocalized selects the locale-matching field with fallback', () => {
