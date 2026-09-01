@@ -321,16 +321,39 @@ async function inspectRepo(owner, repo, token) {
     description: data.description ?? ""
   };
 }
+var DOWNLOAD_TIMEOUT_MS = 3e5;
+var DOWNLOAD_RETRIES = 2;
+async function downloadTarball(url, label, destination) {
+  let lastError;
+  for (let attempt = 0; attempt <= DOWNLOAD_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) });
+      if (!res.ok) throw new Error(`\u4E0B\u8F7D ${label} \u5931\u8D25: HTTP ${res.status}`);
+      await writeFile(destination, Buffer.from(await res.arrayBuffer()));
+      return;
+    } catch (error) {
+      lastError = error;
+      const isTimeout = error instanceof Error && (error.name === "AbortError" || /timeout/i.test(error.message));
+      if (attempt < DOWNLOAD_RETRIES) {
+        await new Promise((resolve3) => setTimeout(resolve3, 1500 * (attempt + 1)));
+        continue;
+      }
+      if (isTimeout) {
+        throw new Error(`\u4E0B\u8F7D ${label} \u8D85\u65F6\uFF08\u4ED3\u5E93\u8F83\u5927\u6216\u7F51\u7EDC\u8F83\u6162\uFF09\uFF0C\u5DF2\u91CD\u8BD5 ${DOWNLOAD_RETRIES} \u6B21\u4ECD\u5931\u8D25\uFF0C\u8BF7\u7A0D\u540E\u91CD\u8BD5`);
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
 async function downloadAndExtract(url, label) {
   const tmp = await mkdtemp(join2(tmpdir(), "dsh-any-skills-"));
   const tarballPath = join2(tmp, "src.tar.gz");
   try {
-    const res = await fetch(url, { headers: { "User-Agent": USER_AGENT }, signal: AbortSignal.timeout(12e4) });
-    if (!res.ok) throw new Error(`\u4E0B\u8F7D ${label} \u5931\u8D25: HTTP ${res.status}`);
-    await writeFile(tarballPath, Buffer.from(await res.arrayBuffer()));
+    await downloadTarball(url, label, tarballPath);
     await execFileAsync("tar", ["-xzf", tarballPath, "-C", tmp], {
       stdio: "ignore",
-      timeout: 12e4
+      timeout: DOWNLOAD_TIMEOUT_MS
     });
     const entries = (await readdir2(tmp)).filter((n) => n !== "src.tar.gz");
     const root = entries.length === 1 ? join2(tmp, entries[0]) : tmp;
@@ -351,11 +374,12 @@ async function installSkillsFromTree(root, installDir, defaultName) {
     if (kind === "bundle") {
       const canonical = skillPath;
       if (seenDirectories.has(canonical)) return;
-      if (await readSkillDoc(join2(canonical, "SKILL.md")) === void 0) return;
-      const summary = await installBundleDir(canonical, installDir);
+      const parsed = await readSkillDoc(join2(canonical, "SKILL.md"));
+      if (parsed === void 0) return;
+      if (seen.has(parsed.name)) return;
+      seen.add(parsed.name);
       seenDirectories.add(canonical);
-      seen.add(summary.name);
-      installed.push(summary);
+      installed.push(await installBundleDir(canonical, installDir));
     } else {
       const parsed = await readSkillDoc(skillPath);
       if (parsed === void 0) return;
@@ -690,8 +714,11 @@ function errorMessage(error) {
   return error instanceof Error ? error.message : String(error);
 }
 export {
+  DOWNLOAD_RETRIES,
+  DOWNLOAD_TIMEOUT_MS,
   apply,
   detectSources,
+  downloadTarball,
   inject,
   installAllFromRoot,
   installFromGitHub,

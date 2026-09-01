@@ -40,7 +40,7 @@ export const inject = ['webServer']
 
 // Re-export the core logic for other host plugins and for tests.
 export { parseSkillText, installAllFromRoot, detectSources, uninstallSkill, restoreSkill, normalizeSkillName, scanDirectory } from './src/skills.js'
-export { parseRepoInput, parseNpmSpec, installFromGitHub, installFromNpm, installSkillsFromTree } from './src/remote.js'
+export { parseRepoInput, parseNpmSpec, installFromGitHub, installFromNpm, installSkillsFromTree, downloadTarball, DOWNLOAD_TIMEOUT_MS, DOWNLOAD_RETRIES } from './src/remote.js'
 
 export interface Config {
   /** Directory where imported/installed skills land. Defaults to ~/.dsh/skills. */

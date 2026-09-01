@@ -310,6 +310,35 @@ test('client bundle: UI text dictionary covers both locales', () => {
   assert.ok(typeof en.installDirLabel === 'string' && en.installDirLabel.length > 0)
 })
 
+test('client bundle: installNoticeText never claims success when nothing installed', () => {
+  const { installNoticeText, uiText } = loadClientBundle()
+  const zh = uiText('zh')
+  const en = uiText('en')
+
+  // 全部失败：必须是非成功提示，不能是「安装完成」
+  const allFailed = installNoticeText([{ source: 'mindfold-ai/Trellis', ok: false, message: '下载超时' }], zh)
+  assert.equal(allFailed.ok, false)
+  assert.match(allFailed.notice, /安装失败/, 'all-failed must not say 安装完成')
+
+  // 全部成功：显示已安装数量
+  const ok = installNoticeText([{ source: 'x/y', ok: true, installed: [{ name: 'a', description: 'd', path: 'p', kind: 'bundle' }] }], zh)
+  assert.equal(ok.ok, true)
+  assert.match(ok.notice, /已安装 1 个技能（1\/1 个来源成功）/)
+
+  // 部分成功：显示成功来源数
+  const partial = installNoticeText([
+    { source: 'a/b', ok: true, installed: [{ name: 's1', description: 'd', path: 'p', kind: 'flat' }] },
+    { source: 'c/d', ok: false, message: 'no skills' },
+  ], zh)
+  assert.equal(partial.ok, true)
+  assert.match(partial.notice, /1\/2 个来源成功/)
+
+  // 英文文案
+  const enFail = installNoticeText([{ source: 'x/y', ok: false, message: 'timeout' }], en)
+  assert.equal(enFail.ok, false)
+  assert.match(enFail.notice, /Install failed/)
+})
+
 test('client bundle: CSS uses official theme tokens only (light/dark adaptive)', () => {
   const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
   for (const banned of [

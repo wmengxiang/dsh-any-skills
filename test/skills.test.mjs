@@ -19,6 +19,7 @@ import {
   restoreSkill,
   detectSources,
   installSkillsFromTree,
+  downloadTarball,
 } from '../index.js'
 
 /* ---------------- parseSkillText ---------------- */
@@ -225,6 +226,65 @@ test('detectSources: finds project-level tool skill dirs', async () => {
     assert.equal(opencodeProject.exists, true)
     assert.equal(opencodeProject.skills.length, 0)
   } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('installSkillsFromTree: deduplicates the same skill name across collection dirs', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-any-skills-test-'))
+  try {
+    const installDir = join(root, 'install')
+    const tree = join(root, 'tree')
+    // 同一技能名出现在 .claude/skills 与 .agents/skills → 只装一次（不重复覆盖）
+    await mkdir(join(tree, '.claude', 'skills', 'shared'), { recursive: true })
+    await writeFile(join(tree, '.claude', 'skills', 'shared', 'SKILL.md'), '---\nname: shared-skill\ndescription: From claude.\n---\nBody\n')
+    await mkdir(join(tree, '.agents', 'skills', 'shared'), { recursive: true })
+    await writeFile(join(tree, '.agents', 'skills', 'shared', 'SKILL.md'), '---\nname: shared-skill\ndescription: From agents.\n---\nBody\n')
+    await mkdir(join(tree, '.codex', 'skills', 'unique'), { recursive: true })
+    await writeFile(join(tree, '.codex', 'skills', 'unique', 'SKILL.md'), '---\nname: unique-skill\ndescription: Only here.\n---\nBody\n')
+
+    const result = await installSkillsFromTree(tree, installDir, 'fallback')
+    assert.deepEqual(result.map((s) => s.name).sort(), ['shared-skill', 'unique-skill'], 'same name installed once')
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('downloadTarball: retries on transient network failures and succeeds', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-any-skills-dl-'))
+  const originalFetch = globalThis.fetch
+  try {
+    let calls = 0
+    globalThis.fetch = async () => {
+      calls++
+      if (calls < 3) throw new Error('socket hang up') // 前两次网络抖动
+      return new Response(Buffer.from('fake-tarball-bytes'))
+    }
+    await downloadTarball('https://example.invalid/x.tar.gz', 'test', join(root, 'out.tar.gz'))
+    assert.equal(calls, 3, 'retried twice after transient failures')
+    const { readFileSync } = await import('node:fs')
+    assert.equal(readFileSync(join(root, 'out.tar.gz'), 'utf8'), 'fake-tarball-bytes')
+  } finally {
+    globalThis.fetch = originalFetch
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test('downloadTarball: reports a friendly message after repeated timeouts', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'dsh-any-skills-dl-'))
+  const originalFetch = globalThis.fetch
+  try {
+    globalThis.fetch = async () => {
+      const err = new Error('The operation was aborted due to timeout')
+      err.name = 'AbortError'
+      throw err
+    }
+    await assert.rejects(
+      downloadTarball('https://example.invalid/big.tar.gz', 'big-repo', join(root, 'out.tar.gz')),
+      /超时|timeout/i,
+    )
+  } finally {
+    globalThis.fetch = originalFetch
     await rm(root, { recursive: true, force: true })
   }
 })

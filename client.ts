@@ -139,6 +139,7 @@ interface UiText {
   skippedSuffix: string
   installedNotice: string
   installDoneNotice: string
+  installFailedNotice: string
   localPathRequired: string
   remoteInputRequired: string
 }
@@ -197,6 +198,7 @@ const ZH_TEXT: UiText = {
   skippedSuffix: '（{n} 个已存在，跳过）',
   installedNotice: '已安装 {n} 个技能（{ok}/{total} 个来源成功）',
   installDoneNotice: '安装完成',
+  installFailedNotice: '安装失败：{n} 个来源（详见下方错误）',
   localPathRequired: '请输入本机目录路径',
   remoteInputRequired: '请输入 GitHub 仓库（owner/repo 或 URL）或 npm 包名',
 }
@@ -255,6 +257,7 @@ const EN_TEXT: UiText = {
   skippedSuffix: ' ({n} already exist, skipped)',
   installedNotice: 'Installed {n} skills ({ok}/{total} sources OK)',
   installDoneNotice: 'Install finished',
+  installFailedNotice: 'Install failed: {n} source(s) (see error below)',
   localPathRequired: 'Enter a local directory path',
   remoteInputRequired: 'Enter a GitHub repo (owner/repo or URL) or an npm package name',
 }
@@ -272,12 +275,34 @@ interface SourceGroup {
   skills: SkillView[]
 }
 
-interface InstallResult {
+export interface InstallResult {
   source: string
   ok: boolean
   installed?: SkillView[]
   branch?: string
   message?: string
+}
+
+/**
+ * 生成安装结果提示：全部来源失败时必须是失败提示（不能是「安装完成」），
+ * 否则显示已安装数量/成功来源数。
+ */
+export function installNoticeText(results: InstallResult[], t: UiText): { notice: string; ok: boolean } {
+  const okCount = results.filter((r) => r.ok).length
+  const failedCount = results.length - okCount
+  if (okCount === 0 && failedCount > 0) {
+    return { notice: t.installFailedNotice.replace('{n}', String(failedCount)), ok: false }
+  }
+  const totalInstalled = results.reduce((n, r) => n + (r.installed?.length ?? 0), 0)
+  return {
+    notice: okCount > 0
+      ? t.installedNotice
+          .replace('{n}', String(totalInstalled))
+          .replace('{ok}', String(okCount))
+          .replace('{total}', String(results.length))
+      : t.installDoneNotice,
+    ok: true,
+  }
 }
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -918,16 +943,9 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     }
     const sources = parts.map((part) => ({ type: guessSourceType(part), value: part }))
     const result = await apiInstall(sources)
-    const ok = result.results.filter((r) => r.ok)
     const failed = result.results.filter((r) => !r.ok)
-    setNotice(
-      ok.length > 0
-        ? t.installedNotice
-            .replace('{n}', String(ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0)))
-            .replace('{ok}', String(ok.length))
-            .replace('{total}', String(result.results.length))
-        : t.installDoneNotice,
-    )
+    const text = installNoticeText(result.results, t)
+    setNotice(text.notice)
     if (failed.length > 0) {
       setError(failed.map((f) => `${f.source}: ${f.message}`).join('；'))
     } else {

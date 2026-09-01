@@ -123,17 +123,50 @@ export async function inspectRepo(owner: string, repo: string, token?: string): 
   }
 }
 
+/** 下载单个 tarball 的超时（ms）：大仓库（数十 MB）在慢网络下需要更长时间。 */
+export const DOWNLOAD_TIMEOUT_MS = 300000
+
+/** 网络抖动时自动重试的次数。 */
+export const DOWNLOAD_RETRIES = 2
+
+/**
+ * 下载 tarball 到 destination。网络失败自动重试；最终超时抛友好错误
+ * （明确提示"仓库较大或网络较慢"而非裸的 AbortError）。
+ */
+export async function downloadTarball(url: string, label: string, destination: string): Promise<void> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= DOWNLOAD_RETRIES; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(DOWNLOAD_TIMEOUT_MS) })
+      if (!res.ok) throw new Error(`下载 ${label} 失败: HTTP ${res.status}`)
+      await writeFile(destination, Buffer.from(await res.arrayBuffer()))
+      return
+    } catch (error) {
+      lastError = error
+      const isTimeout = error instanceof Error && (error.name === 'AbortError' || /timeout/i.test(error.message))
+      if (attempt < DOWNLOAD_RETRIES) {
+        // 网络抖动/瞬时失败：退避后重试
+        await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)))
+        continue
+      }
+      if (isTimeout) {
+        throw new Error(`下载 ${label} 超时（仓库较大或网络较慢），已重试 ${DOWNLOAD_RETRIES} 次仍失败，请稍后重试`)
+      }
+      throw error
+    }
+  }
+  throw lastError
+}
+
 /** Download a tarball and extract it into a fresh temp dir; returns its root. */
 async function downloadAndExtract(url: string, label: string): Promise<{ root: string; cleanup: () => Promise<void> }> {
   const tmp = await mkdtemp(join(tmpdir(), 'dsh-any-skills-'))
   const tarballPath = join(tmp, 'src.tar.gz')
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT }, signal: AbortSignal.timeout(120000) })
-    if (!res.ok) throw new Error(`下载 ${label} 失败: HTTP ${res.status}`)
-    await writeFile(tarballPath, Buffer.from(await res.arrayBuffer()))
+    await downloadTarball(url, label, tarballPath)
     await execFileAsync('tar', ['-xzf', tarballPath, '-C', tmp], {
       stdio: 'ignore',
-      timeout: 120000,
+      timeout: DOWNLOAD_TIMEOUT_MS,
     } as Parameters<typeof execFileAsync>[2])
     const entries = (await readdir(tmp)).filter((n) => n !== 'src.tar.gz')
     const root = entries.length === 1 ? join(tmp, entries[0]) : tmp
@@ -163,11 +196,13 @@ export async function installSkillsFromTree(root: string, installDir: string, de
       const canonical = skillPath
       if (seenDirectories.has(canonical)) return
       // a directory only counts as a skill bundle when it carries SKILL.md
-      if ((await readSkillDoc(join(canonical, 'SKILL.md'))) === undefined) return
-      const summary = await installBundleDir(canonical, installDir)
+      const parsed = await readSkillDoc(join(canonical, 'SKILL.md'))
+      if (parsed === undefined) return
+      // 同名技能可能同时存在于 .claude/skills 与 .agents/skills 等目录：只装一次
+      if (seen.has(parsed.name)) return
+      seen.add(parsed.name)
       seenDirectories.add(canonical)
-      seen.add(summary.name)
-      installed.push(summary)
+      installed.push(await installBundleDir(canonical, installDir))
     } else {
       const parsed = await readSkillDoc(skillPath)
       if (parsed === undefined) return

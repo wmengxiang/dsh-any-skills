@@ -26,6 +26,7 @@ __export(client_exports, {
   currentLocale: () => currentLocale,
   filterSkills: () => filterSkills,
   inject: () => inject,
+  installNoticeText: () => installNoticeText,
   loadImportOpen: () => loadImportOpen,
   loadInstalledOpen: () => loadInstalledOpen,
   pickLocalized: () => pickLocalized,
@@ -112,6 +113,7 @@ var ZH_TEXT = {
   skippedSuffix: "\uFF08{n} \u4E2A\u5DF2\u5B58\u5728\uFF0C\u8DF3\u8FC7\uFF09",
   installedNotice: "\u5DF2\u5B89\u88C5 {n} \u4E2A\u6280\u80FD\uFF08{ok}/{total} \u4E2A\u6765\u6E90\u6210\u529F\uFF09",
   installDoneNotice: "\u5B89\u88C5\u5B8C\u6210",
+  installFailedNotice: "\u5B89\u88C5\u5931\u8D25\uFF1A{n} \u4E2A\u6765\u6E90\uFF08\u8BE6\u89C1\u4E0B\u65B9\u9519\u8BEF\uFF09",
   localPathRequired: "\u8BF7\u8F93\u5165\u672C\u673A\u76EE\u5F55\u8DEF\u5F84",
   remoteInputRequired: "\u8BF7\u8F93\u5165 GitHub \u4ED3\u5E93\uFF08owner/repo \u6216 URL\uFF09\u6216 npm \u5305\u540D"
 };
@@ -169,11 +171,24 @@ var EN_TEXT = {
   skippedSuffix: " ({n} already exist, skipped)",
   installedNotice: "Installed {n} skills ({ok}/{total} sources OK)",
   installDoneNotice: "Install finished",
+  installFailedNotice: "Install failed: {n} source(s) (see error below)",
   localPathRequired: "Enter a local directory path",
   remoteInputRequired: "Enter a GitHub repo (owner/repo or URL) or an npm package name"
 };
 function uiText(locale) {
   return locale === "zh" ? ZH_TEXT : EN_TEXT;
+}
+function installNoticeText(results, t) {
+  const okCount = results.filter((r) => r.ok).length;
+  const failedCount = results.length - okCount;
+  if (okCount === 0 && failedCount > 0) {
+    return { notice: t.installFailedNotice.replace("{n}", String(failedCount)), ok: false };
+  }
+  const totalInstalled = results.reduce((n, r) => n + (r.installed?.length ?? 0), 0);
+  return {
+    notice: okCount > 0 ? t.installedNotice.replace("{n}", String(totalInstalled)).replace("{ok}", String(okCount)).replace("{total}", String(results.length)) : t.installDoneNotice,
+    ok: true
+  };
 }
 async function api(path, init) {
   const res = await fetch(path, {
@@ -694,11 +709,9 @@ function SkillsSettingsSection() {
     }
     const sources2 = parts.map((part) => ({ type: guessSourceType(part), value: part }));
     const result = await apiInstall(sources2);
-    const ok = result.results.filter((r) => r.ok);
     const failed = result.results.filter((r) => !r.ok);
-    setNotice(
-      ok.length > 0 ? t.installedNotice.replace("{n}", String(ok.reduce((n, r) => n + (r.installed?.length ?? 0), 0))).replace("{ok}", String(ok.length)).replace("{total}", String(result.results.length)) : t.installDoneNotice
-    );
+    const text = installNoticeText(result.results, t);
+    setNotice(text.notice);
     if (failed.length > 0) {
       setError(failed.map((f) => `${f.source}: ${f.message}`).join("\uFF1B"));
     } else {
