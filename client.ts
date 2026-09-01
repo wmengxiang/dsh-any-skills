@@ -291,7 +291,12 @@ export function installNoticeText(results: InstallResult[], t: UiText): { notice
   const okCount = results.filter((r) => r.ok).length
   const failedCount = results.length - okCount
   if (okCount === 0 && failedCount > 0) {
-    return { notice: t.installFailedNotice.replace('{n}', String(failedCount)), ok: false }
+    // 把失败来源与原因直接带进红色提示，不用再找"下方错误"
+    const reasons = results
+      .filter((r) => !r.ok)
+      .map((r) => `${r.source}：${r.message ?? '未知原因'}`)
+    const summary = reasons.join('；').slice(0, 140)
+    return { notice: `${t.installFailedNotice.replace('{n}', String(failedCount))}（${summary}）`, ok: false }
   }
   const totalInstalled = results.reduce((n, r) => n + (r.installed?.length ?? 0), 0)
   return {

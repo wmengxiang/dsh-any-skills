@@ -182,7 +182,9 @@ function installNoticeText(results, t) {
   const okCount = results.filter((r) => r.ok).length;
   const failedCount = results.length - okCount;
   if (okCount === 0 && failedCount > 0) {
-    return { notice: t.installFailedNotice.replace("{n}", String(failedCount)), ok: false };
+    const reasons = results.filter((r) => !r.ok).map((r) => `${r.source}\uFF1A${r.message ?? "\u672A\u77E5\u539F\u56E0"}`);
+    const summary = reasons.join("\uFF1B").slice(0, 140);
+    return { notice: `${t.installFailedNotice.replace("{n}", String(failedCount))}\uFF08${summary}\uFF09`, ok: false };
   }
   const totalInstalled = results.reduce((n, r) => n + (r.installed?.length ?? 0), 0);
   return {

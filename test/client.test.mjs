@@ -319,6 +319,12 @@ test('client bundle: installNoticeText never claims success when nothing install
   const allFailed = installNoticeText([{ source: 'mindfold-ai/Trellis', ok: false, message: '下载超时' }], zh)
   assert.equal(allFailed.ok, false)
   assert.match(allFailed.notice, /安装失败/, 'all-failed must not say 安装完成')
+  assert.match(allFailed.notice, /下载超时/, 'failure reason is shown in the notice')
+  assert.match(allFailed.notice, /Trellis/, 'source name is shown in the notice')
+
+  // 无 message 时回退到 source
+  const noMsg = installNoticeText([{ source: 'a/b', ok: false }], zh)
+  assert.match(noMsg.notice, /a\/b/)
 
   // 全部成功：显示已安装数量
   const ok = installNoticeText([{ source: 'x/y', ok: true, installed: [{ name: 'a', description: 'd', path: 'p', kind: 'bundle' }] }], zh)
