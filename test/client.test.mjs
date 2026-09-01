@@ -347,6 +347,8 @@ test('client bundle: installNoticeText never claims success when nothing install
 
 test('client bundle: CSS uses official theme tokens only (light/dark adaptive)', () => {
   const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
+  assert.ok(source.includes('dsh-as-fail'), 'failure notice has a distinct error style')
+  assert.ok(source.includes('dsh-as-ok'), 'success notice keeps the success style')
   for (const banned of [
     '--dsw-alias-interactive-bg-hover',
     '--dsw-alias-label-tertiary',

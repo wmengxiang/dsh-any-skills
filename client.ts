@@ -387,6 +387,7 @@ const CSS = [
   '.dsh-as-btn2.dsh-as-danger:hover:not(:disabled){color:var(--dsw-alias-state-error-primary,#e05c5c);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 12%,transparent);border-color:var(--dsw-alias-state-error-primary,#e05c5c)}',
   '.dsh-as-err{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-warn-primary,#e0a13c);background:color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-warn-primary,#e0a13c) 30%,transparent)}',
   '.dsh-as-ok{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-success-primary,#7bdca8);background:color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-success-primary,#7bdca8) 28%,transparent)}',
+  '.dsh-as-fail{display:flex;gap:8px;align-items:center;padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--dsw-alias-state-error-primary,#e05c5c);background:color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 8%,transparent);border:1px solid color-mix(in srgb,var(--dsw-alias-state-error-primary,#e05c5c) 30%,transparent)}',
   '.dsh-as-spin{animation:dsh-as-spin .9s linear infinite}',
   '@keyframes dsh-as-spin{to{transform:rotate(360deg)}}',
 ].join('\n')
@@ -831,6 +832,11 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const [srcCwd, setSrcCwd] = useState<string | undefined>(undefined)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<string | undefined>(undefined)
+  const [noticeError, setNoticeError] = useState(false)
+  const showNotice = (message: string | undefined, isError = false) => {
+    setNotice(message)
+    setNoticeError(isError)
+  }
   const [error, setError] = useState<string | undefined>(undefined)
   const [localPath, setLocalPath] = useState('')
   const [remoteInput, setRemoteInput] = useState('')
@@ -863,7 +869,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const togglePicker = (value: boolean) => {
     setPickerEnabledState(value)
     applyPickerEnabled(value)
-    setNotice(value ? t.pickerOnNotice : t.pickerOffNotice)
+    showNotice(value ? t.pickerOnNotice : t.pickerOffNotice)
   }
 
   const refresh = useCallback(async () => {
@@ -890,7 +896,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const run = useCallback(async (action: () => Promise<void>) => {
     setBusy(true)
     setError(undefined)
-    setNotice(undefined)
+    showNotice(undefined)
     try {
       await action()
     } catch (cause) {
@@ -905,7 +911,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     if (result.trash !== undefined) {
       setLastUninstall({ name, trash: result.trash, message: result.message })
     } else {
-      setNotice(result.message)
+      showNotice(result.message)
     }
     await refresh()
   })
@@ -913,19 +919,19 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
   const restore = (info: UninstallInfo) => run(async () => {
     const result = await apiRestore(info.name, info.trash)
     setLastUninstall(null)
-    setNotice(result.message)
+    showNotice(result.message)
     await refresh()
   })
 
   const importTool = (group: SourceGroup) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id })
-    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
+    showNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
     await refresh()
   })
 
   const importOne = (group: SourceGroup, skill: SkillView) => run(async () => {
     const result = await apiImport({ type: group.tool, sourceId: group.id, names: [skill.name] })
-    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
+    showNotice(t.importedNotice.replace('{n}', String(result.imported.length)) + (result.skipped !== undefined && result.skipped.length > 0 ? t.skippedSuffix.replace('{n}', String(result.skipped.length)) : ''))
     await refresh()
   })
 
@@ -935,7 +941,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
       return
     }
     const result = await apiImport({ type: 'local', path: localPath.trim() })
-    setNotice(t.importedNotice.replace('{n}', String(result.imported.length)))
+    showNotice(t.importedNotice.replace('{n}', String(result.imported.length)))
     setLocalPath('')
     await refresh()
   })
@@ -950,7 +956,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
     const result = await apiInstall(sources)
     const failed = result.results.filter((r) => !r.ok)
     const text = installNoticeText(result.results, t)
-    setNotice(text.notice)
+    showNotice(text.notice, !text.ok)
     if (failed.length > 0) {
       setError(failed.map((f) => `${f.source}: ${f.message}`).join('；'))
     } else {
@@ -973,7 +979,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
       t.pageSub),
 
     error !== undefined ? h('div', { className: 'dsh-as-err', role: 'alert' }, error) : null,
-    notice !== undefined ? h('div', { className: 'dsh-as-ok', role: 'status' }, notice) : null,
+    notice !== undefined ? h('div', { className: noticeError ? 'dsh-as-fail' : 'dsh-as-ok', role: noticeError ? 'alert' : 'status' }, notice) : null,
     lastUninstall !== null
       ? h('div', { className: 'dsh-as-ok', role: 'status', style: { alignItems: 'flex-start' } },
         h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, flex: 1, minWidth: 0 } },
