@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "build": "node build.mjs",
-    "prepare": "node build.mjs",
+    "prepack": "node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node build.mjs && node --test test/*.test.mjs"
   },

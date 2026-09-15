@@ -42,8 +42,14 @@ dsh plugin --profile web add .
 
 > **说明**：安装时的 `missing peer @deepseek-ai/cordis@^4.0.1` 警告是正常的 —— 与
 > profile 里其它 dsh 插件（dshmarket、dsh-at-file 等）一致，cordis 由 DSH 安装
-> 自身提供，无需单独安装。`Ignored build scripts: esbuild` 同样无害：仓库已提交
-> 构建产物（`index.js` / `client.js`），`prepare` 的重新构建只是冗余保障。
+> 自身提供，无需单独安装。
+>
+> 仓库已提交构建产物（`index.js` / `client.js` / `index.d.ts`），所以构建钩子用
+> `prepack` 而不是 `prepare`。pnpm 只在 git 依赖声明了 `prepare`/`prepack` 时才为它跑
+> 一遍嵌套的 `pnpm install`；`prepack` 在 `main` 产物已存在时会被 pnpm 跳过，因此从
+> git 安装不再触发嵌套安装，`esbuild` 的构建脚本也就不会让安装以 exit 1 失败
+> （pnpm 11 会把它报成 `ERR_PNPM_PREPARE_PACKAGE`，进而卡住整个 profile 的安装与更新）。
+> 打包/发布时 `prepack` 仍会重新构建，保证发布产物与源码一致。
 
 ## 使用 / Usage
 
@@ -142,6 +148,10 @@ pnpm typecheck        # tsc --noEmit
 pnpm test             # build + node --test（16 个单元测试：frontmatter/名称/仓库解析/文件系统流程/API/客户端 bundle）
 pnpm build            # esbuild：index.js（Host ESM）+ client.js（Client CJS + __ModuleLoader__ 握手）
 ```
+
+> 构建钩子是 `prepack`（不是 `prepare`，原因见上）：`pnpm install` 不再自动构建。
+> 改完 `src/` / `client.ts` 后请手动 `pnpm build`，并把 `index.js`、`client.js`、
+> `index.d.ts` 一起提交 —— git 安装直接使用这些已提交产物。
 
 开发测试：
 
