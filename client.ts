@@ -408,39 +408,50 @@ function IconBolt(props: { size?: number; spin?: boolean }): ReturnType<typeof h
   return h('svg', {
     width: props.size ?? 16,
     height: props.size ?? 16,
-    viewBox: '0 0 24 24',
+    viewBox: '0 0 16 16',
     fill: 'none',
     stroke: 'currentColor',
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     className: props.spin === true ? 'dsh-as-spin' : undefined,
     'aria-hidden': true,
     style: { flex: '0 0 auto' },
   },
-  h('path', { d: 'M13 2 3 14h9l-1 8 10-12h-9l1-8z' }))
+  h('path', { d: 'M9.4 1.6 3 9.2h4.6l-1 5.2L13 6.8H8.4Z' }))
 }
 
-function IconTrash(): ReturnType<typeof h> {
-  return h('svg', { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true, style: { flex: '0 0 auto' } },
-    h('path', { d: 'M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z' }))
+function IconTrash(props: { size?: number }): ReturnType<typeof h> {
+  return h('svg', {
+    width: props.size ?? 14,
+    height: props.size ?? 14,
+    viewBox: '0 0 16 16',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.5,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+    'aria-hidden': true,
+    style: { flex: '0 0 auto' },
+  },
+  h('path', { d: 'M3 4.75h10M6.5 4.75V3.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.25M5 4.75l.6 7.9a1 1 0 0 0 1 .95h2.8a1 1 0 0 0 1-.95l.6-7.9' }))
 }
 
 function IconRefresh(props: { size?: number; spin?: boolean }): ReturnType<typeof h> {
   return h('svg', {
     width: props.size ?? 14,
     height: props.size ?? 14,
-    viewBox: '0 0 24 24',
+    viewBox: '0 0 16 16',
     fill: 'none',
     stroke: 'currentColor',
-    strokeWidth: 2,
+    strokeWidth: 1.5,
     strokeLinecap: 'round',
     strokeLinejoin: 'round',
     'aria-hidden': true,
     className: props.spin === true ? 'dsh-as-spin' : undefined,
     style: { flex: '0 0 auto' },
   },
-  h('path', { d: 'M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6' }))
+  h('path', { d: 'M13.3 8a5.3 5.3 0 1 1-1.56-3.75M13.3 2.7v3.6h-3.6' }))
 }
 
 /* ---------------- usage ordering (localStorage) ---------------- */
@@ -788,7 +799,7 @@ function SkillPickerButton(props: PickerProps): ReturnType<typeof h> | null {
           onClick: () => void load(true),
           title: t.refresh,
           'aria-label': t.refreshAria,
-        }, h(IconRefresh, { size: 12 })),
+        }, h(IconRefresh, { size: 14 })),
       ),
       error !== undefined
         ? h('div', { className: 'dsh-as-status' }, `${t.loadFailed}：${error}`)
@@ -1137,7 +1148,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
                     void importTool(group)
                   },
                   title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`,
-                }, h(IconBolt, { size: 12 }), t.importAll),
+                }, h(IconBolt, { size: 14 }), t.importAll),
                 h('span', { className: 'dsh-as-caret', 'aria-hidden': true }, open ? '▾' : '▸'),
               ),
               open
@@ -1161,7 +1172,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
                           disabled: busy,
                           onClick: () => void importOne(group, skill),
                           title: `${t.importOne} ${skill.name}`,
-                        }, h(IconBolt, { size: 12 }), t.importBtn),
+                        }, h(IconBolt, { size: 14 }), t.importBtn),
                     )),
                 )
                 : null,
@@ -1204,7 +1215,7 @@ function SkillsSettingsSection(): ReturnType<typeof h> {
           disabled: busy || remoteInput.trim() === '',
           onClick: () => void installRemote(),
           style: { minWidth: 84 },
-        }, busy ? h(IconRefresh, { size: 12, spin: true }) : null, busy ? t.importing : t.installBtn),
+        }, busy ? h(IconRefresh, { size: 14, spin: true }) : null, busy ? t.importing : t.installBtn),
       ),
     ),
   )

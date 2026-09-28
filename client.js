@@ -282,24 +282,35 @@ function IconBolt(props) {
     {
       width: props.size ?? 16,
       height: props.size ?? 16,
-      viewBox: "0 0 24 24",
+      viewBox: "0 0 16 16",
       fill: "none",
       stroke: "currentColor",
-      strokeWidth: 2,
+      strokeWidth: 1.5,
       strokeLinecap: "round",
       strokeLinejoin: "round",
       className: props.spin === true ? "dsh-as-spin" : void 0,
       "aria-hidden": true,
       style: { flex: "0 0 auto" }
     },
-    (0, import_react.createElement)("path", { d: "M13 2 3 14h9l-1 8 10-12h-9l1-8z" })
+    (0, import_react.createElement)("path", { d: "M9.4 1.6 3 9.2h4.6l-1 5.2L13 6.8H8.4Z" })
   );
 }
-function IconTrash() {
+function IconTrash(props) {
   return (0, import_react.createElement)(
     "svg",
-    { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true, style: { flex: "0 0 auto" } },
-    (0, import_react.createElement)("path", { d: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z" })
+    {
+      width: props.size ?? 14,
+      height: props.size ?? 14,
+      viewBox: "0 0 16 16",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 1.5,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": true,
+      style: { flex: "0 0 auto" }
+    },
+    (0, import_react.createElement)("path", { d: "M3 4.75h10M6.5 4.75V3.5a.75.75 0 0 1 .75-.75h1.5a.75.75 0 0 1 .75.75v1.25M5 4.75l.6 7.9a1 1 0 0 0 1 .95h2.8a1 1 0 0 0 1-.95l.6-7.9" })
   );
 }
 function IconRefresh(props) {
@@ -308,17 +319,17 @@ function IconRefresh(props) {
     {
       width: props.size ?? 14,
       height: props.size ?? 14,
-      viewBox: "0 0 24 24",
+      viewBox: "0 0 16 16",
       fill: "none",
       stroke: "currentColor",
-      strokeWidth: 2,
+      strokeWidth: 1.5,
       strokeLinecap: "round",
       strokeLinejoin: "round",
       "aria-hidden": true,
       className: props.spin === true ? "dsh-as-spin" : void 0,
       style: { flex: "0 0 auto" }
     },
-    (0, import_react.createElement)("path", { d: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6" })
+    (0, import_react.createElement)("path", { d: "M13.3 8a5.3 5.3 0 1 1-1.56-3.75M13.3 2.7v3.6h-3.6" })
   );
 }
 function loadUsage() {
@@ -575,7 +586,7 @@ function SkillPickerButton(props) {
           onClick: () => void load(true),
           title: t.refresh,
           "aria-label": t.refreshAria
-        }, (0, import_react.createElement)(IconRefresh, { size: 12 }))
+        }, (0, import_react.createElement)(IconRefresh, { size: 14 }))
       ),
       error !== void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, `${t.loadFailed}\uFF1A${error}`) : skills === void 0 ? (0, import_react.createElement)("div", { className: "dsh-as-status" }, t.loadingSkills) : (0, import_react.createElement)(
         "div",
@@ -940,7 +951,7 @@ function SkillsSettingsSection() {
                       void importTool(group);
                     },
                     title: group.skills.length === 0 ? t.groupNoSkills : `${t.importAll} ${group.label} (${group.skills.length})`
-                  }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importAll),
+                  }, (0, import_react.createElement)(IconBolt, { size: 14 }), t.importAll),
                   (0, import_react.createElement)("span", { className: "dsh-as-caret", "aria-hidden": true }, open ? "\u25BE" : "\u25B8")
                 ),
                 open ? (0, import_react.createElement)(
@@ -967,7 +978,7 @@ function SkillsSettingsSection() {
                       disabled: busy,
                       onClick: () => void importOne(group, skill),
                       title: `${t.importOne} ${skill.name}`
-                    }, (0, import_react.createElement)(IconBolt, { size: 12 }), t.importBtn)
+                    }, (0, import_react.createElement)(IconBolt, { size: 14 }), t.importBtn)
                   ))
                 ) : null
               );
@@ -1014,7 +1025,7 @@ function SkillsSettingsSection() {
           disabled: busy || remoteInput.trim() === "",
           onClick: () => void installRemote(),
           style: { minWidth: 84 }
-        }, busy ? (0, import_react.createElement)(IconRefresh, { size: 12, spin: true }) : null, busy ? t.importing : t.installBtn)
+        }, busy ? (0, import_react.createElement)(IconRefresh, { size: 14, spin: true }) : null, busy ? t.importing : t.installBtn)
       )
     )
   );
