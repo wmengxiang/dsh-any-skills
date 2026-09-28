@@ -78,20 +78,14 @@ function renderComposerPicker() {
   return composer.component({ input: { draft: '' }, inputActions: { setDraft: () => undefined } })
 }
 
-test('icons: composer picker icon follows the 16-grid design-system spec', () => {
+test('icons: composer picker uses the ⚡ glyph (plugin-wide symbol)', () => {
   const tree = expand(renderComposerPicker())
-  const svgs = findAll(tree, (n) => n && typeof n === 'object' && n.type === 'svg')
-  assert.ok(svgs.length >= 1, 'picker renders an svg icon')
-  const icon = svgs[0]
-  assert.equal(icon.props.viewBox, '0 0 16 16', 'uses the app 16-grid viewBox')
-  assert.equal(icon.props.fill, 'none')
-  assert.equal(icon.props.stroke, 'currentColor', 'theme-adaptive via currentColor')
-  assert.equal(icon.props.width, 16, 'composer icon renders at 16px (1:1 with its grid)')
-  assert.equal(icon.props.height, 16)
-  const strokeWidth = Number(icon.props.strokeWidth)
-  assert.ok(strokeWidth >= 1.2 && strokeWidth <= 1.8, `stroke width in the app range, got ${strokeWidth}`)
-  assert.equal(icon.props.strokeLinecap, 'round')
-  assert.equal(icon.props.strokeLinejoin, 'round')
+  const glyphs = findAll(tree, (n) => n && typeof n === 'object' && n.props !== null && typeof n.props.className === 'string' && n.props.className.startsWith('dsh-as-bolt'))
+  assert.equal(glyphs.length, 1, 'composer button renders the ⚡ glyph')
+  const glyphText = Array.isArray(glyphs[0].children) ? glyphs[0].children.join('') : glyphs[0].children
+  assert.equal(glyphText, '⚡', 'renders the emoji character, not a hand-drawn path')
+  assert.equal(glyphs[0].props['aria-hidden'], true, 'decorative: label comes from the button')
+  assert.equal(glyphs[0].props.style.fontSize, '16px', '16px inside the 28px button')
 })
 
 test('icons: bundle contains no 24-grid icons anymore (grid unified)', () => {

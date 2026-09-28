@@ -233,6 +233,7 @@ var CSS = [
   ".dsh-as-row-main{flex:1;min-width:0}",
   ".dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);font-size:11.5px;font-weight:600;vertical-align:2px}",
   ".dsh-as-caret{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;flex:none}",
+  '.dsh-as-bolt{display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:none;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}',
   ".dsh-as-card-row{display:grid;gap:0;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;overflow:hidden}",
   ".dsh-as-card-row .dsh-as-row{border:none;border-radius:0}",
   ".dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent)}",
@@ -277,23 +278,11 @@ function ensureStyles() {
   document.head.appendChild(style);
 }
 function IconBolt(props) {
-  return (0, import_react.createElement)(
-    "svg",
-    {
-      width: props.size ?? 16,
-      height: props.size ?? 16,
-      viewBox: "0 0 16 16",
-      fill: "none",
-      stroke: "currentColor",
-      strokeWidth: 1.5,
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-      className: props.spin === true ? "dsh-as-spin" : void 0,
-      "aria-hidden": true,
-      style: { flex: "0 0 auto" }
-    },
-    (0, import_react.createElement)("path", { d: "M9.4 1.6 3 9.2h4.6l-1 5.2L13 6.8H8.4Z" })
-  );
+  return (0, import_react.createElement)("span", {
+    className: "dsh-as-bolt" + (props.spin === true ? " dsh-as-spin" : ""),
+    "aria-hidden": true,
+    style: { fontSize: `${props.size ?? 16}px` }
+  }, "\u26A1");
 }
 function IconTrash(props) {
   return (0, import_react.createElement)(

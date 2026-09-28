@@ -357,6 +357,7 @@ const CSS = [
   '.dsh-as-row-main{flex:1;min-width:0}',
   '.dsh-as-count{display:inline-flex;align-items:center;margin-left:8px;padding:0 8px;border-radius:999px;background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 12%,transparent);color:var(--dsw-alias-label-secondary,#8a94a6);font-size:11.5px;font-weight:600;vertical-align:2px}',
   '.dsh-as-caret{color:var(--dsw-alias-label-secondary,#8a94a6);font-size:12px;flex:none}',
+  '.dsh-as-bolt{display:inline-flex;align-items:center;justify-content:center;line-height:1;flex:none;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}',
   '.dsh-as-card-row{display:grid;gap:0;border:1px solid var(--dsw-alias-border-l2,rgba(128,128,128,.16));border-radius:10px;overflow:hidden}',
   '.dsh-as-card-row .dsh-as-row{border:none;border-radius:0}',
   '.dsh-as-card-row.dsh-as-row-open .dsh-as-row{background:color-mix(in srgb,var(--dsw-alias-label-primary,#8a94a6) 6%,transparent)}',
@@ -404,21 +405,13 @@ function ensureStyles(): void {
 
 /* ---------------- icons (inline SVG) ---------------- */
 
+/** ⚡ 字形图标：与插件全处文案（按钮提示/设置页/README）保持同一符号。 */
 function IconBolt(props: { size?: number; spin?: boolean }): ReturnType<typeof h> {
-  return h('svg', {
-    width: props.size ?? 16,
-    height: props.size ?? 16,
-    viewBox: '0 0 16 16',
-    fill: 'none',
-    stroke: 'currentColor',
-    strokeWidth: 1.5,
-    strokeLinecap: 'round',
-    strokeLinejoin: 'round',
-    className: props.spin === true ? 'dsh-as-spin' : undefined,
+  return h('span', {
+    className: 'dsh-as-bolt' + (props.spin === true ? ' dsh-as-spin' : ''),
     'aria-hidden': true,
-    style: { flex: '0 0 auto' },
-  },
-  h('path', { d: 'M9.4 1.6 3 9.2h4.6l-1 5.2L13 6.8H8.4Z' }))
+    style: { fontSize: `${props.size ?? 16}px` },
+  }, '⚡')
 }
 
 function IconTrash(props: { size?: number }): ReturnType<typeof h> {
