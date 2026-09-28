@@ -88,6 +88,17 @@ test('icons: composer picker uses the ⚡ glyph (plugin-wide symbol)', () => {
   assert.equal(glyphs[0].props.style.fontSize, '16px', '16px inside the 28px button')
 })
 
+test('icons: composer button is a bare glyph (no border, no background)', () => {
+  const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
+  const rest = source.match(/\.dsh-as-btn\{[^}]*\}/)
+  assert.ok(rest, '.dsh-as-btn rule exists')
+  const rule = rest[0]
+  assert.match(rule, /background:transparent/, 'resting state has no background')
+  assert.doesNotMatch(rule, /border:1px/, 'resting state has no border')
+  assert.match(rule, /width:28px/, 'hit area unchanged')
+  assert.match(rule, /height:28px/, 'hit area unchanged')
+})
+
 test('icons: bundle contains no 24-grid icons anymore (grid unified)', () => {
   const source = readFileSync(new URL('../client.js', import.meta.url), 'utf8')
   assert.ok(!source.includes('0 0 24 24'), 'no 24-grid icon left in the bundle')
